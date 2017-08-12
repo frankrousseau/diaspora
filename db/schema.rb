@@ -141,7 +141,7 @@ ActiveRecord::Schema.define(version: 20161107100840) do
   create_table "conversation_visibilities", force: :cascade do |t|
     t.integer  "conversation_id", limit: 4,             null: false
     t.integer  "person_id",       limit: 4,             null: false
-    t.integer  "unread",          limit: 4, default: 0, null: false
+    t.integer  "unread",          limit: 4, default: 1, null: false
     t.datetime "created_at",                            null: false
     t.datetime "updated_at",                            null: false
   end
