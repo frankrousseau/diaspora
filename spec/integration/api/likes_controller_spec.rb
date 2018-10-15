@@ -15,6 +15,34 @@ describe Api::V1::LikesController do
     )
   end
 
+  describe "Get Likes for post" do
+    context "with right post id" do
+      it "succeeds in getting empty likes" do
+        get(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(200)
+        likes = response_body(response)
+        expect(likes.length).to eq(0)
+      end
+
+      it "succeeds in getting post with likes likes" do
+        like_service.create(@status.guid)
+        get(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(200)
+        likes = response_body(response)
+        like = likes[0]
+        author = like[:author]
+        expect(author).not_to be_nil
+      end
+
+    end
+  end
+
   describe "#create" do
     context "with right post id" do
       it "succeeeds in liking post" do
@@ -74,4 +102,9 @@ describe Api::V1::LikesController do
   def like_service
     LikeService.new(auth.user)
   end
+
+  def response_body(response)
+    JSON.parse(response.body)
+  end
+
 end
