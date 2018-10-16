@@ -17,7 +17,7 @@ module Api
 
       def show
         likes = like_service.find_for_post(params[:post_id])
-        render json: likes.as_json
+        render json: likes.map {|x| like_json(x)}
       end
 
       def create
@@ -32,6 +32,12 @@ module Api
 
       def like_service
         @like_service ||= LikeService.new(current_user)
+      end
+
+      private
+
+      def like_json(like)
+        LikesPresenter.new(like).as_api_json
       end
     end
   end

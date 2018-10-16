@@ -27,7 +27,7 @@ describe Api::V1::LikesController do
         expect(likes.length).to eq(0)
       end
 
-      it "succeeds in getting post with likes likes" do
+      it "succeeds in getting post with one like" do
         like_service.create(@status.guid)
         get(
           api_v1_post_likes_path(post_id: @status.guid),
@@ -36,8 +36,7 @@ describe Api::V1::LikesController do
         expect(response.status).to eq(200)
         likes = response_body(response)
         like = likes[0]
-        author = like[:author]
-        expect(author).not_to be_nil
+        confirm_like_format(like, auth.user)
       end
 
     end
@@ -97,6 +96,18 @@ describe Api::V1::LikesController do
         expect(response.status).to eq(404)
       end
     end
+  end
+
+  private
+
+  def confirm_like_format(like, user)
+    expect(like.has_key?("guid")).to be_truthy
+    author = like["author"]
+    expect(author).not_to be_nil
+    expect(author["guid"]).to eq(user.guid)
+    expect(author["diaspora_id"]).to eq(user.diaspora_handle)
+    expect(author["name"]).to eq(user.name)
+    expect(author["avatar"]).to eq(user.profile.image_url)
   end
 
   def like_service
