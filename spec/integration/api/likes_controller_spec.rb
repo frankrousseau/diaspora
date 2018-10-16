@@ -27,18 +27,31 @@ describe Api::V1::LikesController do
         expect(likes.length).to eq(0)
       end
 
-      it "succeeds in getting post with one like" do
-        like_service.create(@status.guid)
+      it "succeeds in getting post with one likes" do
+        like_service(bob).create(@status.guid)
+        like_service(auth.user).create(@status.guid)
+        like_service(alice).create(@status.guid)
         get(
           api_v1_post_likes_path(post_id: @status.guid),
           params: {access_token: access_token}
         )
         expect(response.status).to eq(200)
         likes = response_body(response)
-        like = likes[0]
-        confirm_like_format(like, auth.user)
+        expect(likes.length).to eq (3)
+        confirm_like_format(likes[0], alice)
+        confirm_like_format(likes[1], bob)
+        confirm_like_format(likes[2], auth.user)
       end
+    end
 
+    context "with wrong post id" do
+      it "fails at getting likes" do
+        get(
+          api_v1_post_likes_path(post_id: "badguid"),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(404)
+      end
     end
   end
 
@@ -110,8 +123,8 @@ describe Api::V1::LikesController do
     expect(author["avatar"]).to eq(user.profile.image_url)
   end
 
-  def like_service
-    LikeService.new(auth.user)
+  def like_service(user = auth.user)
+    LikeService.new(user)
   end
 
   def response_body(response)
