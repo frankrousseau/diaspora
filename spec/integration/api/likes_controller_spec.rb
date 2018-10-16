@@ -37,7 +37,7 @@ describe Api::V1::LikesController do
         )
         expect(response.status).to eq(200)
         likes = response_body(response)
-        expect(likes.length).to eq (3)
+        expect(likes.length).to eq(3)
         confirm_like_format(likes[0], alice)
         confirm_like_format(likes[1], bob)
         confirm_like_format(likes[2], auth.user)
@@ -113,22 +113,22 @@ describe Api::V1::LikesController do
 
   private
 
+  # rubocop:disable Metrics/AbcSize
   def confirm_like_format(like, user)
     expect(like.has_key?("guid")).to be_truthy
     author = like["author"]
-    expect(author).not_to be_nil
     expect(author["guid"]).to eq(user.guid)
     expect(author["diaspora_id"]).to eq(user.diaspora_handle)
     expect(author["name"]).to eq(user.name)
     expect(author["avatar"]).to eq(user.profile.image_url)
   end
+  # rubocop:enable Metrics/AbcSize
 
-  def like_service(user = auth.user)
+  def like_service(user=auth.user)
     LikeService.new(user)
   end
 
   def response_body(response)
     JSON.parse(response.body)
   end
-
 end

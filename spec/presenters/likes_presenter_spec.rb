@@ -8,9 +8,9 @@ describe LikesPresenter do
       public: true,
       to:     "all"
     )
-    bobs_like_service = LikeService.new(bob);
+    bobs_like_service = LikeService.new(bob)
     like = bobs_like_service.create(@status.guid)
-    @presenter = LikesPresenter.new(like, bob);
+    @presenter = LikesPresenter.new(like, bob)
   end
 
   describe "#as_api_json" do
@@ -23,10 +23,10 @@ describe LikesPresenter do
       expect(like.has_key?(:guid)).to be_truthy
       author = like[:author]
       expect(author).not_to be_nil
-      expect(author).to include ({guid: bob.guid})
-      expect(author).to include ({diaspora_id: bob.diaspora_handle})
-      expect(author).to include ({name: bob.name})
-      expect(author).to include ({avatar: bob.profile.image_url})
+      expect(author).to include(guid: bob.guid)
+      expect(author).to include(diaspora_id: bob.diaspora_handle)
+      expect(author).to include(name: bob.name)
+      expect(author).to include(avatar: bob.profile.image_url)
     end
   end
 end
