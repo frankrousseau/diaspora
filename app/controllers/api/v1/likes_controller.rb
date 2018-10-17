@@ -9,11 +9,11 @@ module Api
       end
 
       rescue_from ActiveRecord::RecordNotFound do
-        render json: I18n.t("likes.not_found"), status: :not_found
+        render json: I18n.t("api.endpoint_errors.posts.post_not_found"), status: :not_found
       end
 
       rescue_from ActiveRecord::RecordInvalid do
-        render json: I18n.t("likes.create.fail"), status: :not_found
+        render json: I18n.t("api.endpoint_errors.likes.user_not_allowed_to_like"), status: :not_found
       end
 
       def show
@@ -22,8 +22,18 @@ module Api
       end
 
       def create
-        like_service.create(params[:post_id])
-        head :no_content
+        begin
+          like_service.create(params[:post_id])
+        rescue ActiveRecord::RecordInvalid => e
+          if(e.message == "Validation failed: Target has already been taken")
+            render json: I18n.t("api.endpoint_errors.likes.like_exists"), status: :unprocessable_entity
+          else
+            raise
+          end
+        else
+          head :no_content
+        end
+
       end
 
       def destroy
