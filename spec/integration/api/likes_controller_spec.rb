@@ -51,7 +51,7 @@ describe Api::V1::LikesController do
           params: {access_token: access_token}
         )
         expect(response.status).to eq(404)
-        expect(response.body).to eq("Post with provided guid could not be found")
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
       end
     end
   end
@@ -97,7 +97,7 @@ describe Api::V1::LikesController do
           params: {access_token: access_token}
         )
         expect(response.status).to eq(404)
-        expect(response.body).to eq("Post with provided guid could not be found")
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
       end
     end
   end
