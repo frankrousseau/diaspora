@@ -3,6 +3,7 @@
 module Api
   module V1
     class LikesController < Api::V1::BaseController
+
       before_action only: %i[create destroy] do
         require_access_token %w[write]
       end
@@ -22,12 +23,12 @@ module Api
 
       def create
         like_service.create(params[:post_id])
-        head :no_content, status: 204
+        head :no_content
       end
 
       def destroy
         like_service.unlike_post(params[:post_id])
-        head :no_content, status: 204
+        head :no_content
       end
 
       def like_service

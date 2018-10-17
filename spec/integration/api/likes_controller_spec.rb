@@ -51,6 +51,7 @@ describe Api::V1::LikesController do
           params: {access_token: access_token}
         )
         expect(response.status).to eq(404)
+        expect(response.body).to eq("Post with provided guid could not be found")
       end
     end
   end
@@ -67,7 +68,27 @@ describe Api::V1::LikesController do
         expect(likes.length).to eq(1)
         expect(likes[0].author.id).to eq(auth.user.person.id)
       end
+
+      it "fails in liking already liked post" do
+        post(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(204)
+
+        post(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(422)
+        expect(response.body).to eq("Like creation has failed")
+
+        likes = like_service.find_for_post(@status.guid)
+        expect(likes.length).to eq(1)
+        expect(likes[0].author.id).to eq(auth.user.person.id)
+      end
     end
+
 
     context "with wrong post id" do
       it "fails at liking post" do
@@ -76,6 +97,7 @@ describe Api::V1::LikesController do
           params: {access_token: access_token}
         )
         expect(response.status).to eq(404)
+        expect(response.body).to eq("Post with provided guid could not be found")
       end
     end
   end
@@ -98,6 +120,26 @@ describe Api::V1::LikesController do
         likes = like_service.find_for_post(@status.guid)
         expect(likes.length).to eq(0)
       end
+
+      it "fails at unliking post user didn't like" do
+        delete(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(204)
+        expect(response.body).to eq("Like doesn’t exist")
+
+        delete(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(404)
+        expect(response.body).to eq("Post with provided guid could not be found")
+
+        likes = like_service.find_for_post(@status.guid)
+        expect(likes.length).to eq(0)
+      end
+
     end
 
     context "with wrong post id" do
