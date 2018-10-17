@@ -15,6 +15,46 @@ describe Api::V1::LikesController do
     )
   end
 
+  describe "Get Likes for post" do
+    context "with right post id" do
+      it "succeeds in getting empty likes" do
+        get(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(200)
+        likes = response_body(response)
+        expect(likes.length).to eq(0)
+      end
+
+      it "succeeds in getting post with one likes" do
+        like_service(bob).create(@status.guid)
+        like_service(auth.user).create(@status.guid)
+        like_service(alice).create(@status.guid)
+        get(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(200)
+        likes = response_body(response)
+        expect(likes.length).to eq(3)
+        confirm_like_format(likes[0], alice)
+        confirm_like_format(likes[1], bob)
+        confirm_like_format(likes[2], auth.user)
+      end
+    end
+
+    context "with wrong post id" do
+      it "fails at getting likes" do
+        get(
+          api_v1_post_likes_path(post_id: "badguid"),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(404)
+      end
+    end
+  end
+
   describe "#create" do
     context "with right post id" do
       it "succeeeds in liking post" do
@@ -71,7 +111,24 @@ describe Api::V1::LikesController do
     end
   end
 
-  def like_service
-    LikeService.new(auth.user)
+  private
+
+  # rubocop:disable Metrics/AbcSize
+  def confirm_like_format(like, user)
+    expect(like.has_key?("guid")).to be_truthy
+    author = like["author"]
+    expect(author["guid"]).to eq(user.guid)
+    expect(author["diaspora_id"]).to eq(user.diaspora_handle)
+    expect(author["name"]).to eq(user.name)
+    expect(author["avatar"]).to eq(user.profile.image_url)
+  end
+  # rubocop:enable Metrics/AbcSize
+
+  def like_service(user=auth.user)
+    LikeService.new(user)
+  end
+
+  def response_body(response)
+    JSON.parse(response.body)
   end
 end

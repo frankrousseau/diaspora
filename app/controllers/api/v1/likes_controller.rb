@@ -15,6 +15,11 @@ module Api
         render json: I18n.t("likes.create.fail"), status: :not_found
       end
 
+      def show
+        likes = like_service.find_for_post(params[:post_id])
+        render json: likes.map {|x| like_json(x) }
+      end
+
       def create
         like_service.create(params[:post_id])
         head :no_content, status: 204
@@ -27,6 +32,12 @@ module Api
 
       def like_service
         @like_service ||= LikeService.new(current_user)
+      end
+
+      private
+
+      def like_json(like)
+        LikesPresenter.new(like).as_api_json
       end
     end
   end
