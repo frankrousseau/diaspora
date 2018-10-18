@@ -3,6 +3,10 @@
 module Api
   module V1
     class LikesController < Api::V1::BaseController
+      before_action only: %i[show] do
+        require_access_token %w[read]
+      end
+
       before_action only: %i[create destroy] do
         require_access_token %w[write]
       end
