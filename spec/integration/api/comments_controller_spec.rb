@@ -43,7 +43,11 @@ describe Api::V1::CommentsController do
     context "valid post ID" do
       it "succeeds in adding a comment" do
         comment_text = "This is a comment"
-        create_comment(@status.guid, comment_text)
+        post(
+          api_v1_post_comments_path(post_id: @status.guid),
+          params: {body: comment_text, access_token: access_token}
+        )
+
         expect(response.status).to eq(201)
         comment = response_body(response)
         confirm_comment_format(comment, auth.user, comment_text)
@@ -52,7 +56,10 @@ describe Api::V1::CommentsController do
 
     context "wrong post id" do
       it "fails at adding a comment" do
-        create_comment("999_999_999", "This is a comment")
+        post(
+          api_v1_post_comments_path(post_id: "999_999_999"),
+          params: {body: "text", access_token: access_token}
+        )
         expect(response.status).to eq(404)
         expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
       end
@@ -61,9 +68,11 @@ describe Api::V1::CommentsController do
     context "lack of permissions" do
       it "fails at adding a comment" do
         alice.blocks.create(person: auth.user.person)
-        create_comment(@status.guid, "That shouldn't be there because I am ignored by this user")
+        post(
+          api_v1_post_comments_path(post_id: @status.guid),
+          params: {body: "That shouldn't be there because I am ignored by this user", access_token: access_token}
+        )
         expect(response.status).to eq(422)
-        expect(response.body).to eq(I18n.t("api.endpoint_errors.comments.not_allowed"))
       end
     end
   end
@@ -72,8 +81,8 @@ describe Api::V1::CommentsController do
     before do
       @comment_text1 = "This is a comment"
       @comment_text2 = "This is a comment 2"
-      create_comment(@status.guid, @comment_text1)
-      create_comment(@status.guid, @comment_text2)
+      comment_service.create(@status.guid, @comment_text1)
+      comment_service.create(@status.guid, @comment_text2)
     end
 
     context "valid post ID" do
@@ -115,8 +124,8 @@ describe Api::V1::CommentsController do
 
   describe "#delete" do
     before do
-      create_comment(@status.guid, "This is a comment")
-      @comment_guid = response_body(response)["guid"]
+      comment = comment_service.create(@status.guid, "This is a comment")
+      @comment_guid = comment.guid
     end
 
     context "valid comment ID" do
@@ -205,8 +214,8 @@ describe Api::V1::CommentsController do
 
   describe "#report" do
     before do
-      create_comment(@status.guid, "This is a comment")
-      @comment_guid = response_body(response)["guid"]
+      comment = comment_service.create(@status.guid, "This is a comment")
+      @comment_guid = comment.guid
     end
 
     context "valid comment ID" do
@@ -255,6 +264,40 @@ describe Api::V1::CommentsController do
           params: {
             reason:       "bad comment",
             access_token: access_token
+          }
+        )
+        expect(response.status).to eq(404)
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
+      end
+    end
+
+    context "invalid Post ID" do
+      it "fails at reporting comment" do
+        post(
+          api_v1_post_comment_report_path(
+            post_id:    "999_999_999",
+            comment_id: @comment_guid
+          ),
+          params: {
+            reason:       "bad comment",
+            access_token: access_token
+          }
+        )
+        expect(response.status).to eq(404)
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
+      end
+    end
+
+    context "lack of private permissions on private post" do
+      it "fails at reporting comment" do
+        post(
+          api_v1_post_comment_report_path(
+            post_id:    @private_post.guid,
+            comment_id: @comment_on_private_post.guid
+          ),
+          params: {
+            reason:       "bad comment",
+            access_token: access_token_public_only
           }
         )
         expect(response.status).to eq(404)
@@ -311,13 +354,6 @@ describe Api::V1::CommentsController do
 
   def comment_service(user=auth.user)
     CommentService.new(user)
-  end
-
-  def create_comment(post_guid, text)
-    post(
-      api_v1_post_comments_path(post_id: post_guid),
-      params: {body: text, access_token: access_token}
-    )
   end
 
   def response_body(response)
