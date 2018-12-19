@@ -57,6 +57,16 @@ describe Api::V1::PhotosController do
     end
 
     context "fails" do
+      it "with other this user's private photo without private:read scope in token" do
+        get(
+          api_v1_photo_path(@private_photo1.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(404)
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.photos.not_found"))
+        raise NotImplementedError
+      end
+
       it "with other user's private photo" do
         get(
           api_v1_photo_path(@private_photo1.guid),
@@ -214,6 +224,15 @@ describe Api::V1::PhotosController do
         )
         expect(response.status).to eq(403)
       end
+
+      it "with private photo and no private:modify access token" do
+        post(
+          api_v1_photos_path,
+          params: {image: @encoded_photo, access_token: access_token_read_only}
+        )
+        expect(response.status).to eq(403)
+        raise NotImplementedError
+      end
     end
   end
 
@@ -263,6 +282,15 @@ describe Api::V1::PhotosController do
           params: {access_token: access_token_read_only}
         )
         expect(response.status).to eq(403)
+      end
+
+      it "with private photo and no private:modify token" do
+        delete(
+          api_v1_photo_path(@user_photo1.guid),
+          params: {access_token: access_token_read_only}
+        )
+        expect(response.status).to eq(403)
+        raise NotImplementedError
       end
     end
   end

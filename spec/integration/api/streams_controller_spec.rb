@@ -13,6 +13,8 @@ describe Api::V1::StreamsController do
     @status = PostService.new(auth.user).find(@created_status.id)
   end
 
+  # TODO Add contacts:read private:read checks into each of the stream checks
+
   describe "#aspect" do
     it "contains expected aspect message" do
       get(

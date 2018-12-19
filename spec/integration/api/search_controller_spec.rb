@@ -83,6 +83,17 @@ describe Api::V1::SearchController do
       expect(users.length).to eq(0)
     end
 
+    it "doesn't return hidden accounts who are linked without contacts:read token" do
+      get(
+        "/api/v1/search/users",
+        params: {name_or_handle: "unsearchable@example.org", access_token: access_token}
+      )
+      expect(response.status).to eq(200)
+      users = response_body_data(response)
+      expect(users.length).to eq(0)
+      raise NotImplementedError
+    end
+
     it "fails if ask for both" do
       get(
         "/api/v1/search/users",

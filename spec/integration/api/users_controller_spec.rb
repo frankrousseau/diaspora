@@ -92,6 +92,16 @@ describe Api::V1::UsersController do
         expect(response.status).to eq(401)
       end
 
+
+      it "fails for private profile if don't have contacts:read" do
+        get(
+          api_v1_user_path(alice.person.guid),
+          params: {access_token: "999_999_999"}
+        )
+        expect(response.status).to eq(403)
+        raise NotImplementedError
+      end
+
       it "fails with invalid user GUID" do
         get(
           "/api/v1/users/999_999_999",
@@ -309,6 +319,21 @@ describe Api::V1::UsersController do
         confirm_photos(photos)
       end
 
+      it "returns only public photos of other user without private:read scope in token" do
+        get(
+          api_v1_user_photos_path(alice.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(200)
+        photos = response_body_data(response)
+        expect(photos.length).to eq(3)
+        guids = photos.map {|photo| photo["guid"] }
+        expect(guids).to include(@public_photo1.guid, @public_photo2.guid)
+        expect(guids).not_to include(@private_photo1.guid, @shared_photo1.guid)
+        confirm_photos(photos)
+        raise NotImplementedError
+      end
+
       it "returns logged in user's photos" do
         get(
           api_v1_user_photos_path(auth.user.guid),
@@ -378,6 +403,17 @@ describe Api::V1::UsersController do
         expect(response.status).to eq(200)
         posts = response_body_data(response)
         expect(posts.length).to eq(2)
+      end
+
+      it "returns public posts only without private:read scope in token" do
+        get(
+          api_v1_user_posts_path(auth.user.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(200)
+        posts = response_body_data(response)
+        expect(posts.length).to eq(0)
+        raise NotImplementedError
       end
     end
 

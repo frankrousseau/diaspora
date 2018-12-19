@@ -176,6 +176,21 @@ describe Api::V1::PostsController do
       end
     end
 
+    context "access private post to reader without private:read scope in token" do
+      it "fails to get post" do
+        private_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice.aspects.first.id)
+        get(
+          api_v1_post_path(private_post.id),
+          params: {
+            access_token: access_token_with_read
+          }
+        )
+        expect(response.status).to eq(404)
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
+        raise NotImplementedError
+      end
+    end
+
     context "access post with invalid id" do
       it "fails to get post" do
         get(
@@ -245,6 +260,29 @@ describe Api::V1::PostsController do
         post = response_body(response)
         expect(response.status).to eq(200)
         confirm_post_format(post, auth_with_read_and_write.user, post_for_ref_only)
+      end
+
+      it "doesn't creates a private post without private:modify scope in token" do
+        aspect = Aspect.find_by(user_id: auth_with_read_and_write.user.id)
+        post_for_ref_only = auth_with_read_and_write.user.post(
+          :status_message,
+          text:       "Hello this is a private post!",
+          aspect_ids: [aspect[:id]]
+        )
+
+        post(
+          api_v1_posts_path,
+          params: {
+            access_token: access_token_with_read_and_write,
+            body:         "Hello this is a private post!",
+            public:       false,
+            aspects:      [aspect[:id]]
+          }
+        )
+        post = response_body(response)
+        expect(response.status).to eq(200)
+        confirm_post_format(post, auth_with_read_and_write.user, post_for_ref_only)
+        raise NotImplementedError
       end
     end
 
@@ -570,6 +608,23 @@ describe Api::V1::PostsController do
         )
 
         expect(response.status).to eq(403)
+      end
+    end
+
+    context "when post is private but no private:modify scope in token" do
+      it "doesn't delete the post" do
+        @status = auth_with_read.user.post(
+          :status_message,
+          text:   "hello",
+          public: true
+        )
+        delete(
+          api_v1_post_path(@status.id),
+          params: {access_token: access_token_with_read}
+        )
+
+        expect(response.status).to eq(403)
+        raise NotImplementedError
       end
     end
 

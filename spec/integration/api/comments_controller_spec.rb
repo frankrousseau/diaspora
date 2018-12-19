@@ -87,6 +87,12 @@ describe Api::V1::CommentsController do
         expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
       end
     end
+
+    context "can't see comment on limited post without private:read token" do
+      it "fails" do
+        raise NotImplementedError
+      end
+    end
   end
 
   describe "#delete" do
@@ -152,8 +158,8 @@ describe Api::V1::CommentsController do
       end
     end
 
-    context "insufficient permissions (not your comment and not owner)" do
-      it "fails at deleting comment" do
+    context "insufficient permissions" do
+      it "fails at deleting other user's comment on other user's post" do
         alices_comment = comment_service(alice).create(@status.guid, "Alice's comment")
         delete(
           api_v1_post_comment_path(
@@ -164,6 +170,10 @@ describe Api::V1::CommentsController do
         )
         expect(response.status).to eq(403)
         expect(response.body).to eq(I18n.t("api.endpoint_errors.comments.no_delete"))
+      end
+
+      it "fails at deleting your comment on post without private:modify token" do
+        raise NotImplementedError
       end
     end
   end

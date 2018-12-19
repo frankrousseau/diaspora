@@ -15,6 +15,8 @@ describe Api::V1::LikesController do
     )
   end
 
+  # TODO Add all token checks
+
   describe "#show" do
     context "with right post id" do
       it "succeeds in getting empty likes" do
@@ -54,6 +56,18 @@ describe Api::V1::LikesController do
         expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
       end
     end
+
+    context "without private:read scope in token" do
+      it "fails at getting likes" do
+        get(
+          api_v1_post_likes_path(post_id: "badguid"),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(404)
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
+        raise NotImplementedError
+      end
+    end
   end
 
   describe "#create" do
@@ -86,6 +100,26 @@ describe Api::V1::LikesController do
         likes = like_service.find_for_post(@status.guid)
         expect(likes.length).to eq(1)
         expect(likes[0].author.id).to eq(auth.user.person.id)
+      end
+
+      it "fails in liking private post without private:modify" do
+        post(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(204)
+
+        post(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(422)
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.likes.like_exists"))
+
+        likes = like_service.find_for_post(@status.guid)
+        expect(likes.length).to eq(1)
+        expect(likes[0].author.id).to eq(auth.user.person.id)
+        raise NotImplementedError
       end
     end
 
@@ -136,6 +170,25 @@ describe Api::V1::LikesController do
 
         likes = like_service.find_for_post(@status.guid)
         expect(likes.length).to eq(0)
+      end
+
+      it "fails at unliking private post without private:modify" do
+        delete(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(204)
+
+        delete(
+          api_v1_post_likes_path(post_id: @status.guid),
+          params: {access_token: access_token}
+        )
+        expect(response.status).to eq(404)
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.likes.no_like"))
+
+        likes = like_service.find_for_post(@status.guid)
+        expect(likes.length).to eq(0)
+        raise NotImplementedError
       end
     end
 

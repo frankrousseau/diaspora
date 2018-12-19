@@ -29,6 +29,15 @@ describe Api::V1::AspectsController do
       end
     end
 
+    it "fails if token doesn't have contacts:read" do
+      get(
+        api_v1_aspects_path,
+        params: {access_token: "999_999_999"}
+      )
+      expect(response.status).to eq(403)
+      raise NotImplementedError
+    end
+
     it "fails if invalid token" do
       get(
         api_v1_aspects_path,
@@ -62,6 +71,17 @@ describe Api::V1::AspectsController do
         )
         expect(response.status).to eq(404)
         expect(response.body).to eq(I18n.t("api.endpoint_errors.aspects.not_found"))
+      end
+    end
+
+    context "without contacts:read in token" do
+      it "fails to return with error" do
+        get(
+          api_v1_aspect_path(@aspect2.id),
+          params: {access_token: "999_999_999"}
+        )
+        expect(response.status).to eq(403)
+        raise NotImplementedError
       end
     end
 

@@ -17,6 +17,8 @@ describe Api::V1::PostInteractionsController do
     )
   end
 
+  # TODO Add checks for each on private posts without private:token
+
   describe "#subscribe" do
     context "succeeds" do
       it "with proper guid and access token" do
