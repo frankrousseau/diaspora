@@ -3,14 +3,14 @@
 require "spec_helper"
 
 describe Api::V1::PostsController do
-  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_read_scopes) }
-  let(:auth_public_only) { FactoryGirl.create(:auth_with_all_scopes_not_private) }
-  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_read_scopes_not_private) }
+  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify]) }
+  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify]) }
+  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read private:read]) }
+  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read]) }
   let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
   let!(:access_token) { auth.create_access_token.to_s }
-  let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
+  let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 
@@ -179,11 +179,11 @@ describe Api::V1::PostsController do
       end
 
       it "or creates a private post" do
-        aspect = Aspect.find_by(user_id: auth.user.id)
+        aspect = auth.user.aspects.create(name: "new aspect")
         post_for_ref_only = auth.user.post(
           :status_message,
           text:       "Hello this is a private post!",
-          aspect_ids: [aspect[:id]]
+          aspect_ids: [aspect.id]
         )
 
         post(
@@ -192,7 +192,7 @@ describe Api::V1::PostsController do
             access_token: access_token,
             body:         "Hello this is a private post!",
             public:       false,
-            aspects:      [aspect[:id]]
+            aspects:      [aspect.id]
           }
         )
         post = response_body(response)
@@ -201,20 +201,14 @@ describe Api::V1::PostsController do
       end
 
       it "doesn't creates a private post without private:modify scope in token" do
-        aspect = Aspect.find_by(user_id: auth.user.id)
-        post_for_ref_only = auth_public_only.user.post(
-          :status_message,
-          text:       "Hello this is a private post!",
-          aspect_ids: [aspect[:id]]
-        )
-
+        aspect = auth.user.aspects.create(name: "new aspect")
         post(
           api_v1_posts_path,
           params: {
             access_token: access_token_public_only,
             body:         "Hello this is a private post!",
             public:       false,
-            aspects:      [aspect[:id]]
+            aspects:      [aspect.id]
           }
         )
 
@@ -484,14 +478,15 @@ describe Api::V1::PostsController do
       end
 
       it "fails when no public field but aspects" do
-        aspect = Aspect.find_by(user_id: auth.user.id)
+        aspect = auth.user.aspects.create(name: "new aspect")
+        auth.user.share_with(alice.person, aspect)
         message_text = "hello @{#{alice.diaspora_handle}} from Bob!"
         post(
           api_v1_posts_path,
           params: {
             access_token: access_token,
             body:         message_text,
-            aspects:      [aspect[:id]]
+            aspects:      [aspect.id]
           }
         )
         expect(response.status).to eq(422)
@@ -549,10 +544,11 @@ describe Api::V1::PostsController do
 
     context "when post is private but no private:modify scope in token" do
       it "doesn't delete the post" do
+        aspect = auth_public_only.user.aspects.create(name: "new aspect")
         @status = auth_public_only.user.post(
           :status_message,
-          text:   "hello",
-          aspects: [auth_public_only.user.aspects.first.id]
+          text:    "hello",
+          aspects: [aspect.id]
         )
         delete(
           api_v1_post_path(@status.guid),
