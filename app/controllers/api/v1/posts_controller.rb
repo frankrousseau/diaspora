@@ -18,10 +18,10 @@ module Api
       end
 
       def show
-        mark_notifications =
-          params[:mark_notifications].present? && params[:mark_notifications]
+        has_private = has_access_token %w[private:read]
+        puts "Has Private as well? #{has_private}"
         post = post_service.find!(params[:id])
-        post_service.mark_user_notifications(post.id) if mark_notifications
+        raise ActiveRecord::RecordNotFound unless post.public? || has_private
         render json: post_as_json(post)
       end
 
@@ -35,9 +35,10 @@ module Api
       end
 
       def destroy
-        post_service.destroy(params[:id])
+        allow_private_delete = has_access_token %W[private:modify]
+        post_service.destroy(params[:id], allow_private_delete)
         head :no_content
-      rescue Diaspora::NotMine
+      rescue Diaspora::NotMine, Diaspora::NonPublic
         render json: I18n.t("api.endpoint_errors.posts.failed_delete"), status: :forbidden
       end
 

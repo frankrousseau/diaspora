@@ -5,9 +5,13 @@ require "spec_helper"
 describe Api::V1::PostsController do
   let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
   let(:auth_read_only) { FactoryGirl.create(:auth_with_read_scopes) }
+  let(:auth_public_only) { FactoryGirl.create(:auth_with_all_scopes_not_private) }
+  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_read_scopes_not_private) }
   let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
+  let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
+  let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 
 
@@ -37,7 +41,7 @@ describe Api::V1::PostsController do
     context "access simple by post ID" do
       it "gets post" do
         get(
-          api_v1_post_path(@status.id),
+          api_v1_post_path(@status.guid),
           params: {
             access_token: access_token
           }
@@ -59,7 +63,7 @@ describe Api::V1::PostsController do
         status_message = StatusMessageCreationService.new(alice).create(merged_params)
 
         get(
-          api_v1_post_path(status_message.id),
+          api_v1_post_path(status_message.guid),
           params: {
             access_token: access_token
           }
@@ -74,7 +78,7 @@ describe Api::V1::PostsController do
       it "gets post" do
         reshare_post = FactoryGirl.create(:reshare, root: @status, author: bob.person)
         get(
-          api_v1_post_path(reshare_post.id),
+          api_v1_post_path(reshare_post.guid),
           params: {
             access_token: access_token
           }
@@ -89,7 +93,7 @@ describe Api::V1::PostsController do
       it "fails to get post" do
         private_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice.aspects.first.id)
         get(
-          api_v1_post_path(private_post.id),
+          api_v1_post_path(private_post.guid),
           params: {
             access_token: access_token
           }
@@ -101,16 +105,27 @@ describe Api::V1::PostsController do
 
     context "access private post to reader without private:read scope in token" do
       it "fails to get post" do
-        private_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice.aspects.first.id)
+        alice_shared_spec = alice.aspects.create(name: "shared aspect")
+        alice.share_with(auth_public_only_read_only.user.person, alice_shared_spec)
+        alice.share_with(auth_read_only.user.person, alice_shared_spec)
+
+        shared_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice_shared_spec.id)
         get(
-          api_v1_post_path(private_post.id),
+          api_v1_post_path(shared_post.guid),
           params: {
-            access_token: access_token
+            access_token: access_token_public_only_read_only
           }
         )
         expect(response.status).to eq(404)
         expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
-        raise NotImplementedError
+
+        get(
+          api_v1_post_path(shared_post.guid),
+          params: {
+            access_token: access_token_read_only
+          }
+        )
+        expect(response.status).to eq(200)
       end
     end
 
@@ -511,7 +526,7 @@ describe Api::V1::PostsController do
           to:     "all"
         )
         delete(
-          api_v1_post_path(@status.id),
+          api_v1_post_path(@status.guid),
           params: {access_token: access_token}
         )
         expect(response.status).to eq(204)
@@ -526,7 +541,7 @@ describe Api::V1::PostsController do
           public: true
         )
         delete(
-          api_v1_post_path(@status.id),
+          api_v1_post_path(@status.guid),
           params: {access_token: access_token_read_only}
         )
 
@@ -536,18 +551,17 @@ describe Api::V1::PostsController do
 
     context "when post is private but no private:modify scope in token" do
       it "doesn't delete the post" do
-        @status = auth_with_read.user.post(
+        @status = auth_public_only.user.post(
           :status_message,
           text:   "hello",
-          public: true
+          aspects: [auth_public_only.user.aspects.first.id]
         )
         delete(
-          api_v1_post_path(@status.id),
-          params: {access_token: access_token_read_only}
+          api_v1_post_path(@status.guid),
+          params: {access_token: access_token_public_only}
         )
 
         expect(response.status).to eq(403)
-        raise NotImplementedError
       end
     end
 
