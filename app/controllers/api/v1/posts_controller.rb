@@ -18,14 +18,13 @@ module Api
       end
 
       def show
-        has_private = has_access_token %w[private:read]
-        puts "Has Private as well? #{has_private}"
         post = post_service.find!(params[:id])
-        raise ActiveRecord::RecordNotFound unless post.public? || has_private
+        raise ActiveRecord::RecordNotFound unless post.public? || has_private_read
         render json: post_as_json(post)
       end
 
       def create
+        raise StandardError unless params.require(:public) || has_private_modify
         status_service = StatusMessageCreationService.new(current_user)
         creation_params = normalized_create_params
         @status_message = status_service.create(creation_params)
@@ -35,8 +34,7 @@ module Api
       end
 
       def destroy
-        allow_private_delete = has_access_token %W[private:modify]
-        post_service.destroy(params[:id], allow_private_delete)
+        post_service.destroy(params[:id], has_private_modify)
         head :no_content
       rescue Diaspora::NotMine, Diaspora::NonPublic
         render json: I18n.t("api.endpoint_errors.posts.failed_delete"), status: :forbidden

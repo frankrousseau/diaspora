@@ -202,7 +202,7 @@ describe Api::V1::PostsController do
 
       it "doesn't creates a private post without private:modify scope in token" do
         aspect = Aspect.find_by(user_id: auth.user.id)
-        post_for_ref_only = auth.user.post(
+        post_for_ref_only = auth_public_only.user.post(
           :status_message,
           text:       "Hello this is a private post!",
           aspect_ids: [aspect[:id]]
@@ -211,16 +211,14 @@ describe Api::V1::PostsController do
         post(
           api_v1_posts_path,
           params: {
-            access_token: access_token,
+            access_token: access_token_public_only,
             body:         "Hello this is a private post!",
             public:       false,
             aspects:      [aspect[:id]]
           }
         )
-        post = response_body(response)
-        expect(response.status).to eq(200)
-        confirm_post_format(post, auth.user, post_for_ref_only)
-        raise NotImplementedError
+
+        expect(response.status).to eq(422)
       end
     end
 
