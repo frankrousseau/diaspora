@@ -253,7 +253,7 @@ describe Api::OpenidConnect::AuthorizationsController, type: :request do
         before do
           get new_api_openid_connect_authorization_path, params: {client_id: client.client_id,
               redirect_uri: "http://localhost:3000/", response_type: "id_token",
-              scope: "openid read", nonce: 413_093_098_3, state: 413_093_098_3}
+              scope: "openid interactions", nonce: 413_093_098_3, state: 413_093_098_3}
         end
 
         it "should receive another authorization request" do
