@@ -905,6 +905,8 @@ en:
           deny: "Deny"
           bad_request: "Missing client id or redirect URI"
           client_id_not_found: "No client with client_id %{client_id} with redirect URI %{redirect_uri} found"
+          private_contacts_linkage_error: "private:read and private:modify require contacts:read as well"
+          unknown_scope: "Unknown scope: #{scope_name}"
         destroy:
           fail: "The attempt to revoke the authorization with ID %{id} failed"
       user_applications:
