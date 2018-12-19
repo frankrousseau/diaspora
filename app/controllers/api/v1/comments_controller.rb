@@ -4,11 +4,11 @@ module Api
   module V1
     class CommentsController < Api::V1::BaseController
       before_action do
-        require_access_token %w[interactions]
+        require_access_token %w[interactions public:read]
       end
 
       before_action only: %i[create destroy] do
-        require_access_token %w[interactions]
+        require_access_token %w[interactions public:modify]
       end
 
       rescue_from ActiveRecord::RecordNotFound do
@@ -20,6 +20,8 @@ module Api
       end
 
       def create
+        post = post_service.find!(params[:post_id])
+        raise ActiveRecord::RecordNotFound unless post.public? || has_private_modify
         @comment = comment_service.create(params[:post_id], params[:body])
         comment = comment_as_json(@comment)
       rescue ActiveRecord::RecordNotFound
@@ -29,6 +31,8 @@ module Api
       end
 
       def index
+        post = post_service.find!(params[:post_id])
+        raise ActiveRecord::RecordNotFound unless post.public? || has_private_read
         comments_query = comment_service.find_for_post(params[:post_id])
         params[:after] = Time.utc(1900).iso8601 if params.permit(:before, :after).empty?
         comments_page = time_pager(comments_query).response
@@ -37,6 +41,8 @@ module Api
       end
 
       def destroy
+        post = post_service.find!(params[:post_id])
+        raise ActiveRecord::RecordInvalid unless post.public? || has_private_modify
         if comment_and_post_validate(params[:post_id], params[:id])
           comment_service.destroy!(params[:id])
           head :no_content
@@ -92,6 +98,10 @@ module Api
 
       def comment_service
         @comment_service ||= CommentService.new(current_user)
+      end
+
+      def post_service
+        @post_service ||= PostService.new(current_user)
       end
 
       def comment_as_json(comment)

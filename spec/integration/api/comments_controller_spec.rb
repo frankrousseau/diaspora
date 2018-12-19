@@ -3,8 +3,10 @@
 require "spec_helper"
 
 describe Api::V1::CommentsController do
-  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
+  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify interactions]) }
+  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify interactions]) }
   let!(:access_token) { auth.create_access_token.to_s }
+  let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
 
   before do
     @status = alice.post(
@@ -24,6 +26,17 @@ describe Api::V1::CommentsController do
     )
 
     @comment_on_eves_post = comment_service.create(@eves_post.guid, "Comment on eve's post")
+
+    aspect = auth_public_only.user.aspects.create(name: "first aspect")
+    @private_post = auth_public_only.user.post(
+      "Post",
+      status_message: {text: "This is a private status message"},
+      public:         false,
+      to:             [aspect.id],
+      type:           "Post"
+    )
+    @comment_on_private_post = comment_service(auth_public_only.user)
+                                 .create(@private_post.guid, "Comment on my private post")
   end
 
   describe "#create" do
@@ -90,7 +103,12 @@ describe Api::V1::CommentsController do
 
     context "can't see comment on limited post without private:read token" do
       it "fails" do
-        raise NotImplementedError
+        get(
+          api_v1_post_comments_path(post_id: @private_post.guid),
+          params: {access_token: access_token_public_only}
+        )
+        expect(response.status).to eq(404)
+        expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
       end
     end
   end
@@ -173,7 +191,14 @@ describe Api::V1::CommentsController do
       end
 
       it "fails at deleting your comment on post without private:modify token" do
-        raise NotImplementedError
+        delete(
+          api_v1_post_comment_path(
+            post_id: @private_post.guid,
+            id:      @comment_on_private_post.guid
+          ),
+          params: {access_token: access_token_public_only}
+        )
+        expect(response.status).to eq(403)
       end
     end
   end
