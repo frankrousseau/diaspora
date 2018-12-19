@@ -4,7 +4,7 @@ module Api
   module V1
     class SearchController < Api::V1::BaseController
       before_action do
-        require_access_token %w[read]
+        require_access_token %w[public:read]
       end
 
       rescue_from ActionController::ParameterMissing, RuntimeError do

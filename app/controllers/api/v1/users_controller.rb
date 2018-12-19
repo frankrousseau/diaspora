@@ -5,12 +5,20 @@ module Api
     class UsersController < Api::V1::BaseController
       include TagsHelper
 
-      before_action except: %i[update] do
-        require_access_token %w[read]
+      before_action except: %i[contacts update show] do
+        require_access_token %w[public:read]
       end
 
       before_action only: %i[update] do
-        require_access_token %w[write]
+        require_access_token %w[profile:modify]
+      end
+
+      before_action only: %i[contacts] do
+        require_access_token %w[contacts:read]
+      end
+
+      before_action only: %i[show] do
+        require_access_token %w[profile]
       end
 
       rescue_from ActiveRecord::RecordNotFound do

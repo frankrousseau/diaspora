@@ -4,11 +4,11 @@ module Api
   module V1
     class PhotosController < Api::V1::BaseController
       before_action except: %i[create destroy] do
-        require_access_token %w[read]
+        require_access_token %w[public:read]
       end
 
       before_action only: %i[create destroy] do
-        require_access_token %w[read write]
+        require_access_token %w[public:modify]
       end
 
       rescue_from ActiveRecord::RecordNotFound do

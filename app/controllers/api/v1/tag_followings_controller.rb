@@ -3,12 +3,12 @@
 module Api
   module V1
     class TagFollowingsController < Api::V1::BaseController
-      before_action only: %i[index] do
-        require_access_token %w[read]
+      before_action except: %i[create destroy] do
+        require_access_token %w[tags:read]
       end
 
       before_action only: %i[create destroy] do
-        require_access_token %w[read write]
+        require_access_token %w[tags:modify]
       end
 
       rescue_from StandardError do

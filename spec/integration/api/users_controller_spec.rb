@@ -5,10 +5,12 @@ require "spec_helper"
 describe Api::V1::UsersController do
   include PeopleHelper
 
-  let(:auth) { FactoryGirl.create(:auth_with_read_and_write) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_read) }
+  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
+  let(:auth_read_only) { FactoryGirl.create(:auth_with_read_scopes) }
+  let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
+  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 
   describe "#show" do
     context "Current User" do
@@ -96,7 +98,7 @@ describe Api::V1::UsersController do
       it "fails for private profile if don't have contacts:read" do
         get(
           api_v1_user_path(alice.person.guid),
-          params: {access_token: "999_999_999"}
+          params: {access_token: access_token_profile_only}
         )
         expect(response.status).to eq(403)
         raise NotImplementedError

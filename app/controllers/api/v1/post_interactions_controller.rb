@@ -6,7 +6,7 @@ module Api
       include PostsHelper
 
       before_action do
-        require_access_token %w[read write]
+        require_access_token %w[interactions]
       end
 
       rescue_from ActiveRecord::RecordNotFound do

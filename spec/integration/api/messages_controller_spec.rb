@@ -3,7 +3,7 @@
 require "spec_helper"
 
 describe Api::V1::MessagesController do
-  let(:auth) { FactoryGirl.create(:auth_with_read_and_write) }
+  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
   let!(:access_token) { auth.create_access_token.to_s }
 
   before do

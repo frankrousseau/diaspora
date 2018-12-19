@@ -3,10 +3,12 @@
 require "spec_helper"
 
 describe Api::V1::AspectsController do
-  let(:auth) { FactoryGirl.create(:auth_with_read_and_write) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_read) }
+  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
+  let(:auth_read_only) { FactoryGirl.create(:auth_with_read_scopes) }
+  let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
+  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 
   before do
     @aspect1 = auth.user.aspects.where(name: "generic").first
@@ -32,10 +34,9 @@ describe Api::V1::AspectsController do
     it "fails if token doesn't have contacts:read" do
       get(
         api_v1_aspects_path,
-        params: {access_token: "999_999_999"}
+        params: {access_token: access_token_profile_only}
       )
       expect(response.status).to eq(403)
-      raise NotImplementedError
     end
 
     it "fails if invalid token" do
@@ -78,10 +79,9 @@ describe Api::V1::AspectsController do
       it "fails to return with error" do
         get(
           api_v1_aspect_path(@aspect2.id),
-          params: {access_token: "999_999_999"}
+          params: {access_token: access_token_profile_only}
         )
         expect(response.status).to eq(403)
-        raise NotImplementedError
       end
     end
 

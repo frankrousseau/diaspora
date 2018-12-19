@@ -3,12 +3,12 @@
 module Api
   module V1
     class CommentsController < Api::V1::BaseController
-      before_action only: %i[index report] do
-        require_access_token %w[read]
+      before_action do
+        require_access_token %w[interactions]
       end
 
       before_action only: %i[create destroy] do
-        require_access_token %w[write]
+        require_access_token %w[interactions]
       end
 
       rescue_from ActiveRecord::RecordNotFound do
