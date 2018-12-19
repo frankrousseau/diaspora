@@ -51,10 +51,11 @@ module Api
           @scopes = req.scope.map {|scope|
             scope.tap do |scope_name|
               req.invalid_scope! I18n.t("api.openid_connect.authorizations.new.unknown_scope") \
-                unless auth_scopes.include? scope_name
+                unless auth_scopes.include?(scope_name)
             end
           }
 
+          @scopes.push("public:read") unless @scopes.include?("public:read")
           if @scopes.include?("private:read") || @scopes.include?("private:modify")
             req.invalid_scope! I18n.t("api.openid_connect.authorizations.new.private_contacts_linkage_error") \
               unless @scopes.include? "contacts:read"
