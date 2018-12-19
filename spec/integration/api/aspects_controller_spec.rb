@@ -3,16 +3,16 @@
 require "spec_helper"
 
 describe Api::V1::AspectsController do
-  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_read_scopes) }
+  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid contacts:read contacts:modify]) }
+  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid contacts:read]) }
   let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 
   before do
-    @aspect1 = auth.user.aspects.where(name: "generic").first
-    @aspect2 = auth.user.aspects.create(name: "another aspect")
+    @aspect1 = auth.user.aspects.create(name: "first aspect")
+    @aspect2 = auth.user.aspects.create(name: "second aspect")
   end
 
   describe "#index" do
