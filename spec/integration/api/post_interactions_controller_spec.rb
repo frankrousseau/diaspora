@@ -3,9 +3,11 @@
 require "spec_helper"
 
 describe Api::V1::PostInteractionsController do
-  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
+  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify interactions]) }
+  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify interactions]) }
   let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
   let!(:access_token) { auth.create_access_token.to_s }
+  let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 
   before do
@@ -15,9 +17,15 @@ describe Api::V1::PostInteractionsController do
       public: true,
       to:     "all"
     )
-  end
 
-  # TODO Add checks for each on private posts without private:token
+    alice_shared_spec = alice.aspects.create(name: "shared aspect")
+    alice.share_with(auth_public_only.user.person, alice_shared_spec)
+    alice.share_with(auth.user.person, alice_shared_spec)
+    alice.share_with(auth_profile_only.user.person, alice_shared_spec)
+
+    @shared_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice_shared_spec.id)
+
+  end
 
   describe "#subscribe" do
     context "succeeds" do
@@ -73,6 +81,16 @@ describe Api::V1::PostInteractionsController do
         expect(response.status).to eq(403)
       end
 
+      it "on private post without private token" do
+        post(
+          api_v1_post_subscribe_path(@shared_post.guid),
+          params: {
+            access_token: access_token_public_only
+          }
+        )
+        expect(response.status).to eq(404)
+      end
+
       it "with invalid token" do
         post(
           api_v1_post_subscribe_path(@status.guid),
@@ -120,6 +138,16 @@ describe Api::V1::PostInteractionsController do
           }
         )
         expect(response.status).to eq(403)
+      end
+
+      it "on private post without private token" do
+        post(
+          api_v1_post_hide_path(@shared_post.guid),
+          params: {
+            access_token: access_token_public_only
+          }
+        )
+        expect(response.status).to eq(404)
       end
 
       it "with invalid token" do
@@ -196,6 +224,16 @@ describe Api::V1::PostInteractionsController do
           }
         )
         expect(response.status).to eq(403)
+      end
+
+      it "on private post without private token" do
+        post(
+          api_v1_post_mute_path(@shared_post.guid),
+          params: {
+            access_token: access_token_public_only
+          }
+        )
+        expect(response.status).to eq(404)
       end
 
       it "with invalid token" do
@@ -281,6 +319,17 @@ describe Api::V1::PostInteractionsController do
         expect(response.status).to eq(403)
       end
 
+      it "on private post without private token" do
+        post(
+          api_v1_post_report_path(@shared_post.guid),
+          params: {
+            reason:       "My reason",
+            access_token: access_token_public_only
+          }
+        )
+        expect(response.status).to eq(404)
+      end
+
       it "with invalid token" do
         post(
           api_v1_post_report_path(@status.guid),
@@ -358,6 +407,7 @@ describe Api::V1::PostInteractionsController do
       expect(response.status).to eq(404)
       expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
     end
+
     it "with insufficient token" do
       post(
         api_v1_post_vote_path(@poll_post.guid),
@@ -367,6 +417,17 @@ describe Api::V1::PostInteractionsController do
         }
       )
       expect(response.status).to eq(403)
+    end
+
+    it "on private post without private token" do
+      post(
+        api_v1_post_vote_path(@shared_post.guid),
+        params: {
+          poll_answer_id: @poll_answer.id,
+          access_token:   access_token_public_only
+        }
+      )
+      expect(response.status).to eq(404)
     end
 
     it "with invalid token" do
