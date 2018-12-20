@@ -22,7 +22,8 @@ module Api
                            params[:name_or_handle],
                            current_user,
                            only_contacts: connected_only,
-                           mutual:        connected_only)
+                           mutual:        connected_only
+                         )
                        end
         user_page = index_pager(people_query).response
         user_page[:data] = user_page[:data].map {|p| PersonPresenter.new(p).as_api_json }

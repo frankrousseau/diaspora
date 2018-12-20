@@ -6,7 +6,8 @@ describe Api::V1::PostInteractionsController do
   let(:auth) {
     FactoryGirl.create(
       :auth_with_profile_only,
-      scopes: %w[openid public:read public:modify private:read private:modify interactions])
+      scopes: %w[openid public:read public:modify private:read private:modify interactions]
+    )
   }
 
   let(:auth_public_only) {

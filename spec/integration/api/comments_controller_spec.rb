@@ -47,8 +47,7 @@ describe Api::V1::CommentsController do
       to:             [aspect.id],
       type:           "Post"
     )
-    @comment_on_private_post = comment_service(auth_public_only.user)
-                                 .create(@private_post.guid, "Comment on my private post")
+    @comment_on_private_post = comment_service(auth_public_only.user).create(@private_post.guid, "Private comment")
   end
 
   describe "#create" do

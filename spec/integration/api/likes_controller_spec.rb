@@ -41,10 +41,7 @@ describe Api::V1::LikesController do
       to:             [aspect.id],
       type:           "Post"
     )
-
   end
-
-  # TODO Add all token checks
 
   describe "#show" do
     context "with right post id" do

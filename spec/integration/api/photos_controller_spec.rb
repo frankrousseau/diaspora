@@ -61,7 +61,8 @@ describe Api::V1::PhotosController do
       :photo,
       pending:   false,
       user_file: File.open(photo_fixture_name),
-      to:        shared_spec.id)
+      to:        shared_spec.id
+    )
   end
 
   describe "#show" do

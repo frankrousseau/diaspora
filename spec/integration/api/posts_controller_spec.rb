@@ -38,7 +38,6 @@ describe Api::V1::PostsController do
   let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 
-
   let(:alice_aspect) { alice.aspects.first }
 
   let(:alice_photo1) {

@@ -12,7 +12,8 @@ describe Api::V1::UsersController do
   let(:auth) {
     FactoryGirl.create(
       :auth_with_profile_only,
-      scopes: full_scopes)
+      scopes: full_scopes
+    )
   }
 
   let(:auth_public_only) {
