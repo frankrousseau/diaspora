@@ -27,7 +27,9 @@ module Api
 
       def show
         person = if params.has_key?(:id)
-                   Person.find_by!(guid: params[:id])
+                   found_person = Person.find_by!(guid: params[:id])
+                   raise ActiveRecord::RecordNotFound unless found_person.searchable || has_access_token("contacts:read")
+                   found_person
                  else
                    current_user.person
                  end
@@ -60,7 +62,12 @@ module Api
 
       def photos
         person = Person.find_by!(guid: params[:user_id])
-        photos_query = Photo.visible(current_user, person, :all, Time.current)
+        user_for_query = if has_private_read
+                           current_user
+                         else
+                           nil
+                         end
+        photos_query = Photo.visible(user_for_query, person, :all, Time.current)
         photos_page = time_pager(photos_query).response
         photos_page[:data] = photos_page[:data].map {|photo| PhotoPresenter.new(photo).as_api_json(true) }
         render json: photos_page
@@ -68,7 +75,11 @@ module Api
 
       def posts
         person = Person.find_by!(guid: params[:user_id])
-        posts_query = current_user.posts_from(person, false)
+        posts_query = if has_private_read
+                        current_user.posts_from(person, false)
+                      else
+                        Post.where(author_id: person.id, public: true)
+                      end
         posts_page = time_pager(posts_query).response
         posts_page[:data] = posts_page[:data].map {|post| PostPresenter.new(post, current_user).as_api_response }
         render json: posts_page
