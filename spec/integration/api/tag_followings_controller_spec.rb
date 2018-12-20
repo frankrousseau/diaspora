@@ -3,8 +3,20 @@
 require "spec_helper"
 
 describe Api::V1::TagFollowingsController do
-  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid tags:read tags:modify]) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid tags:read]) }
+  let(:auth) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid tags:read tags:modify]
+    )
+  }
+
+  let(:auth_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid tags:read]
+    )
+  }
+
   let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
@@ -166,7 +178,6 @@ describe Api::V1::TagFollowingsController do
         expect(response.status).to eq(401)
       end
     end
-
   end
 
   private

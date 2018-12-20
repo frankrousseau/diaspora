@@ -3,11 +3,38 @@
 require "spec_helper"
 
 describe Api::V1::PhotosController do
-  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify]) }
-  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify]) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read private:read]) }
-  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read]) }
-  let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
+  let(:auth) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify private:read private:modify]
+    )
+  }
+
+  let(:auth_public_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify]
+    )
+  }
+
+  let(:auth_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read private:read]
+    )
+  }
+
+  let(:auth_public_only_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read]
+    )
+  }
+
+  let(:auth_profile_only) {
+    FactoryGirl.create(:auth_with_profile_only)
+  }
+
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
@@ -30,10 +57,11 @@ describe Api::V1::PhotosController do
     auth_public_only_read_only.user.share_with(auth_public_only_read_only.user.person, shared_spec)
     auth_public_only_read_only.user.share_with(auth_read_only.user.person, shared_spec)
 
-    @shared_photo1 = auth_public_only_read_only.user.post(:photo, pending: false,
-                                                              user_file: File.open(photo_fixture_name),
-                                                              to:shared_spec.id)
-
+    @shared_photo1 = auth_public_only_read_only.user.post(
+      :photo,
+      pending:   false,
+      user_file: File.open(photo_fixture_name),
+      to:        shared_spec.id)
   end
 
   describe "#show" do

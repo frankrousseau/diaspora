@@ -3,9 +3,24 @@
 require "spec_helper"
 
 describe Api::V1::LikesController do
-  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify interactions]) }
-  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify interactions]) }
-  let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
+  let(:auth) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify private:read private:modify interactions]
+    )
+  }
+
+  let(:auth_public_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify interactions]
+    )
+  }
+
+  let(:auth_profile_only) {
+    FactoryGirl.create(:auth_with_profile_only)
+  }
+
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }

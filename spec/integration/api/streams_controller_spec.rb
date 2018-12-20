@@ -3,9 +3,27 @@
 require "spec_helper"
 
 describe Api::V1::StreamsController do
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read private:read contacts:read tags:read]) }
-  let(:auth_public_only_tags) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read tags:read]) }
-  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read]) }
+  let(:auth_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read private:read contacts:read tags:read]
+    )
+  }
+
+  let(:auth_public_only_tags) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read tags:read]
+    )
+  }
+
+  let(:auth_public_only_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read]
+    )
+  }
+
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_public_only_tags) { auth_public_only_tags.create_access_token.to_s }
   let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
@@ -14,19 +32,37 @@ describe Api::V1::StreamsController do
     @aspect = auth_read_only.user.aspects.create(name: "new aspect")
     auth_read_only.user.share_with(auth_public_only_read_only.user.person, @aspect)
 
-    @created_status = auth_read_only.user.post(:status_message, text: "This is a status message #test @{#{auth_read_only.user.diaspora_handle}}", public: true)
+    @created_status = auth_read_only.user.post(
+      :status_message,
+      text:   "This is a status message #test @{#{auth_read_only.user.diaspora_handle}}",
+      public: true
+    )
     comment_service(auth_read_only.user).create(@created_status.guid, "Comment")
     auth_read_only.user.like!(@created_status)
     @status = PostService.new(auth_read_only.user).find(@created_status.id)
 
-    @private_post = auth_read_only.user.post(:status_message, text: "This is a private status message #test @{#{auth_read_only.user.diaspora_handle}}", public: false, to: @aspect.id)
+    @private_post = auth_read_only.user.post(
+      :status_message,
+      text:   "This is a private status message #test @{#{auth_read_only.user.diaspora_handle}}",
+      public: false,
+      to:     @aspect.id
+    )
     comment_service(auth_read_only.user).create(@private_post.guid, "Comment")
     auth_read_only.user.like!(@private_post)
 
-    @created_status2 = auth_public_only_read_only.user.post(:status_message, text: "This is a status message #test @{#{auth_public_only_read_only.user.diaspora_handle}}", public: true)
+    @created_status2 = auth_public_only_read_only.user.post(
+      :status_message,
+      text:   "This is a status message #test @{#{auth_public_only_read_only.user.diaspora_handle}}",
+      public: true
+    )
     auth_public_only_read_only.user.like!(@created_status2)
     comment_service(auth_public_only_read_only.user).create(@created_status2.guid, "Comment")
-    @created_status3 = auth_public_only_read_only.user.post(:status_message, text: "This is a status message #test @{#{auth_public_only_read_only.user.diaspora_handle}}", public: false, to:"all")
+    @created_status3 = auth_public_only_read_only.user.post(
+      :status_message,
+      text:   "This is a status message #test @{#{auth_public_only_read_only.user.diaspora_handle}}",
+      public: false,
+      to:     "all"
+    )
     auth_public_only_read_only.user.like!(@created_status3)
     comment_service(auth_public_only_read_only.user).create(@created_status3.guid, "Comment")
 
@@ -43,7 +79,7 @@ describe Api::V1::StreamsController do
       expect(response.status).to eq 200
       post = response_body_data(response)
       expect(post.length).to eq 3
-      json_post = post.select{|p| p["guid"] == @status.guid}.first
+      json_post = post.select {|p| p["guid"] == @status.guid }.first
       confirm_post_format(json_post, auth_read_only.user, @status)
     end
 
@@ -55,7 +91,7 @@ describe Api::V1::StreamsController do
       expect(response.status).to eq 200
       post = response_body_data(response)
       expect(post.length).to eq 3
-      json_post = post.select{|p| p["guid"] == @status.guid}.first
+      json_post = post.select {|p| p["guid"] == @status.guid }.first
       confirm_post_format(json_post, auth_read_only.user, @status)
     end
 
@@ -131,7 +167,7 @@ describe Api::V1::StreamsController do
       expect(response.status).to eq 200
       post = response_body_data(response)
       expect(post.length).to eq 2
-      json_post = post.select{|p| p["guid"] == @status.guid}.first
+      json_post = post.select {|p| p["guid"] == @status.guid }.first
       confirm_post_format(json_post, auth_read_only.user, @status)
     end
 
@@ -163,7 +199,7 @@ describe Api::V1::StreamsController do
       expect(response.status).to eq 200
       post = response_body_data(response)
       expect(post.length).to eq 3
-      json_post = post.select{|p| p["guid"] == @status.guid}.first
+      json_post = post.select {|p| p["guid"] == @status.guid }.first
       confirm_post_format(json_post, auth_read_only.user, @status)
     end
 
@@ -255,7 +291,7 @@ describe Api::V1::StreamsController do
       expect(response.status).to eq 200
       post = response_body_data(response)
       expect(post.length).to eq 2
-      json_post = post.select{|p| p["guid"] == @status.guid}.first
+      json_post = post.select {|p| p["guid"] == @status.guid }.first
       confirm_post_format(json_post, auth_read_only.user, @status)
     end
 

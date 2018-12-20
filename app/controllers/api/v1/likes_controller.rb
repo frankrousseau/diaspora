@@ -17,7 +17,7 @@ module Api
 
       def show
         post = post_service.find!(params[:post_id])
-        raise ActiveRecord::RecordInvalid unless post.public? || has_private_read
+        raise ActiveRecord::RecordInvalid unless post.public? || private_read?
         likes_query = like_service.find_for_post(params[:post_id])
         likes_page = index_pager(likes_query).response
         likes_page[:data] = likes_page[:data].map {|x| like_json(x) }
@@ -26,7 +26,7 @@ module Api
 
       def create
         post = post_service.find!(params[:post_id])
-        raise ActiveRecord::RecordInvalid unless post.public? || has_private_modify
+        raise ActiveRecord::RecordInvalid unless post.public? || private_modify?
         like_service.create(params[:post_id])
       rescue ActiveRecord::RecordInvalid => e
         return render json: I18n.t("api.endpoint_errors.likes.like_exists"), status: :unprocessable_entity if
@@ -38,7 +38,7 @@ module Api
 
       def destroy
         post = post_service.find!(params[:post_id])
-        raise ActiveRecord::RecordInvalid unless post.public? || has_private_modify
+        raise ActiveRecord::RecordInvalid unless post.public? || private_modify?
         success = like_service.unlike_post(params[:post_id])
         if success
           head :no_content

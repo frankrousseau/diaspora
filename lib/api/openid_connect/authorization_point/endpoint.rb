@@ -56,10 +56,10 @@ module Api
           }
 
           @scopes.push("public:read") unless @scopes.include?("public:read")
-          if @scopes.include?("private:read") || @scopes.include?("private:modify")
-            req.invalid_scope! I18n.t("api.openid_connect.authorizations.new.private_contacts_linkage_error") \
-              unless @scopes.include? "contacts:read"
-          end
+          has_private_scope = @scopes.include?("private:read") || @scopes.include?("private:modify")
+          has_contacts_scope = @scopes.include? "contacts:read"
+          req.invalid_scope! I18n.t("api.openid_connect.authorizations.new.private_contacts_linkage_error") \
+            if has_private_scope && !has_contacts_scope
         end
 
         def auth_scopes

@@ -5,11 +5,40 @@ require "spec_helper"
 describe Api::V1::UsersController do
   include PeopleHelper
 
-  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify contacts:read profile profile:modify]) }
-  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify]) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read private:read contacts:read profile]) }
-  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read]) }
-  let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
+  let(:full_scopes) {
+    %w[openid public:read public:modify private:read private:modify contacts:read profile profile:modify]
+  }
+
+  let(:auth) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: full_scopes)
+  }
+
+  let(:auth_public_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify]
+    )
+  }
+
+  let(:auth_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read private:read contacts:read profile]
+    )
+  }
+
+  let(:auth_public_only_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read]
+    )
+  }
+
+  let(:auth_profile_only) {
+    FactoryGirl.create(:auth_with_profile_only)
+  }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
@@ -55,7 +84,7 @@ describe Api::V1::UsersController do
       it "succeeds with in Aspect valid user" do
         alice.profile[:public_details] = true
         alice.profile.save
-        aspect = auth.user.aspects.create(name:"first")
+        aspect = auth.user.aspects.create(name: "first")
         auth.user.share_with(alice.person, aspect)
         get(
           "/api/v1/users/#{alice.guid}",
@@ -98,7 +127,6 @@ describe Api::V1::UsersController do
         )
         expect(response.status).to eq(401)
       end
-
 
       it "fails for private profile if don't have contacts:read" do
         unsearchable_user = FactoryGirl.create(
@@ -396,7 +424,7 @@ describe Api::V1::UsersController do
 
       auth.user.post(:status_message, text: "auth user message1", public: true)
       auth.user.post(:status_message, text: "auth user message2", public: true)
-      auth.user.post(:status_message, text: "auth user message3", public: false, to:"all")
+      auth.user.post(:status_message, text: "auth user message3", public: false, to: "all")
       @public_post1 = alice.post(:status_message, text: "alice public message1", public: true)
       @public_post2 = alice.post(:status_message, text: "alice public message2", public: true)
       @shared_post1 = alice.post(:status_message, text: "alice limited to auth user message",

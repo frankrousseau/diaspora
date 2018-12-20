@@ -48,10 +48,9 @@ module Api
       private
 
       def stream_responder(stream_klass=nil, query_time_field="posts.created_at", data_time_field="created_at")
-        public_only = !has_private_read
         @stream = stream_klass.present? ? stream_klass.new(current_user, max_time: stream_max_time) : @stream
         query = @stream.stream_posts
-        query = query.where(public: true) unless has_private_read
+        query = query.where(public: true) unless private_read?
         posts_page = pager(query, query_time_field, data_time_field).response
         posts_page[:data] = posts_page[:data].map {|post| PostPresenter.new(post, current_user).as_api_response }
         posts_page[:links].delete(:previous)

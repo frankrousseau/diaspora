@@ -17,9 +17,12 @@ module Api
         people_query = if params.has_key?(:tag)
                          Person.profile_tagged_with(params[:tag])
                        else
-                         connected_only = !has_private_read
-                         Person.search(params[:name_or_handle], current_user, only_contacts: connected_only,
-                                       mutual: connected_only)
+                         connected_only = !private_read?
+                         Person.search(
+                           params[:name_or_handle],
+                           current_user,
+                           only_contacts: connected_only,
+                           mutual:        connected_only)
                        end
         user_page = index_pager(people_query).response
         user_page[:data] = user_page[:data].map {|p| PersonPresenter.new(p).as_api_json }
@@ -27,7 +30,7 @@ module Api
       end
 
       def post_index
-        posts_query = if has_private_read
+        posts_query = if private_read?
                         Stream::Tag.new(current_user, params.require(:tag)).posts
                       else
                         Stream::Tag.new(nil, params.require(:tag)).posts

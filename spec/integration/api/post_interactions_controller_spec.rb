@@ -3,9 +3,23 @@
 require "spec_helper"
 
 describe Api::V1::PostInteractionsController do
-  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify interactions]) }
-  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify interactions]) }
-  let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
+  let(:auth) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify private:read private:modify interactions])
+  }
+
+  let(:auth_public_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify interactions]
+    )
+  }
+
+  let(:auth_profile_only) {
+    FactoryGirl.create(:auth_with_profile_only)
+  }
+
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
@@ -18,13 +32,12 @@ describe Api::V1::PostInteractionsController do
       to:     "all"
     )
 
-    alice_shared_spec = alice.aspects.create(name: "shared aspect")
-    alice.share_with(auth_public_only.user.person, alice_shared_spec)
-    alice.share_with(auth.user.person, alice_shared_spec)
-    alice.share_with(auth_profile_only.user.person, alice_shared_spec)
+    alice_shared_aspect = alice.aspects.create(name: "shared aspect")
+    alice.share_with(auth_public_only.user.person, alice_shared_aspect)
+    alice.share_with(auth.user.person, alice_shared_aspect)
+    alice.share_with(auth_profile_only.user.person, alice_shared_aspect)
 
-    @shared_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice_shared_spec.id)
-
+    @shared_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice_shared_aspect.id)
   end
 
   describe "#subscribe" do

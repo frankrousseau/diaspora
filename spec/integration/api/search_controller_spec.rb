@@ -3,9 +3,27 @@
 require "spec_helper"
 
 describe Api::V1::SearchController do
-  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify]) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read private:read]) }
-  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read]) }
+  let(:auth) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify private:read private:modify]
+    )
+  }
+
+  let(:auth_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read private:read]
+    )
+  }
+
+  let(:auth_public_only_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read]
+    )
+  }
+
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
@@ -146,9 +164,8 @@ describe Api::V1::SearchController do
         :status_message,
         text:   "This is Eve's status message #tag2 #tag3",
         public: false,
-        to: aspect.id
+        to:     aspect.id
       )
-
     end
 
     it "succeeds by tag" do

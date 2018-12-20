@@ -16,7 +16,7 @@ module Api
       end
 
       def index
-        query = if has_private_read
+        query = if private_read?
                   current_user.photos
                 else
                   current_user.photos.where(public: true)
@@ -29,14 +29,14 @@ module Api
       def show
         photo = photo_service.visible_photo(params.require(:id))
         raise ActiveRecord::RecordNotFound unless photo
-        raise ActiveRecord::RecordNotFound unless photo.public? || has_private_read
+        raise ActiveRecord::RecordNotFound unless photo.public? || private_read?
         render json: PhotoPresenter.new(photo).as_api_json(true)
       end
 
       def create
         image = params.require(:image)
         public_photo = params.has_key?(:aspect_ids)
-        raise RuntimeError unless public_photo || has_private_modify
+        raise RuntimeError unless public_photo || private_modify?
         base_params = params.permit(:aspect_ids, :pending, :set_profile_photo)
         photo = photo_service.create_from_params_and_file(base_params, image)
         raise RuntimeError unless photo
@@ -48,7 +48,7 @@ module Api
       def destroy
         photo = current_user.photos.where(guid: params[:id]).first
         raise ActiveRecord::RecordNotFound unless photo
-        raise ActiveRecord::RecordNotFound unless photo.public? || has_private_modify
+        raise ActiveRecord::RecordNotFound unless photo.public? || private_modify?
         if current_user.retract(photo)
           head :no_content
         else

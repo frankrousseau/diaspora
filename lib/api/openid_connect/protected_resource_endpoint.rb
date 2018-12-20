@@ -30,10 +30,10 @@ module Api
 
       def require_access_token(required_scopes)
         raise Rack::OAuth2::Server::Resource::Bearer::Forbidden.new(:insufficient_scope) unless
-          has_access_token(required_scopes)
+          access_token?(required_scopes)
       end
 
-      def has_access_token(required_scopes)
+      def access_token?(required_scopes)
         @current_token = request.env[Rack::OAuth2::Server::Resource::ACCESS_TOKEN]
         raise Rack::OAuth2::Server::Resource::Bearer::Unauthorized.new("Unauthorized user") unless
           @current_token && @current_token.authorization

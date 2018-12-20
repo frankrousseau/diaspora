@@ -19,12 +19,12 @@ module Api
 
       def show
         post = post_service.find!(params[:id])
-        raise ActiveRecord::RecordNotFound unless post.public? || has_private_read
+        raise ActiveRecord::RecordNotFound unless post.public? || private_read?
         render json: post_as_json(post)
       end
 
       def create
-        raise StandardError unless params.require(:public) || has_private_modify
+        raise StandardError unless params.require(:public) || private_modify?
         status_service = StatusMessageCreationService.new(current_user)
         creation_params = normalized_create_params
         @status_message = status_service.create(creation_params)
@@ -34,7 +34,7 @@ module Api
       end
 
       def destroy
-        post_service.destroy(params[:id], has_private_modify)
+        post_service.destroy(params[:id], private_modify?)
         head :no_content
       rescue Diaspora::NotMine, Diaspora::NonPublic
         render json: I18n.t("api.endpoint_errors.posts.failed_delete"), status: :forbidden

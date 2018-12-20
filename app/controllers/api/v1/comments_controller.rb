@@ -20,7 +20,6 @@ module Api
       end
 
       def create
-        post = find_post
         @comment = comment_service.create(params[:post_id], params[:body])
         comment = comment_as_json(@comment)
       rescue ActiveRecord::RecordNotFound
@@ -39,7 +38,7 @@ module Api
       end
 
       def destroy
-        post = find_post(true)
+        find_post
         if comment_and_post_validate(params[:post_id], params[:id])
           comment_service.destroy!(params[:id])
           head :no_content
@@ -108,11 +107,10 @@ module Api
 
       def find_post(use_invalid=false)
         post = post_service.find!(params[:post_id])
-        return post if post.public? || has_private_read
+        return post if post.public? || private_read?
         raise ActiveRecord::RecordInvalid if use_invalid
         raise ActiveRecord::RecordNotFound
       end
-
     end
   end
 end

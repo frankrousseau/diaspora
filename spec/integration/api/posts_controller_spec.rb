@@ -3,10 +3,34 @@
 require "spec_helper"
 
 describe Api::V1::PostsController do
-  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify]) }
-  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify]) }
-  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read private:read]) }
-  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read]) }
+  let(:auth) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify private:read private:modify]
+    )
+  }
+
+  let(:auth_public_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify]
+    )
+  }
+
+  let(:auth_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read private:read]
+    )
+  }
+
+  let(:auth_public_only_read_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read]
+    )
+  }
+
   let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
@@ -105,11 +129,11 @@ describe Api::V1::PostsController do
 
     context "access private post to reader without private:read scope in token" do
       it "fails to get post" do
-        alice_shared_spec = alice.aspects.create(name: "shared aspect")
-        alice.share_with(auth_public_only_read_only.user.person, alice_shared_spec)
-        alice.share_with(auth_read_only.user.person, alice_shared_spec)
+        alice_shared_aspect = alice.aspects.create(name: "shared aspect")
+        alice.share_with(auth_public_only_read_only.user.person, alice_shared_aspect)
+        alice.share_with(auth_read_only.user.person, alice_shared_aspect)
 
-        shared_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice_shared_spec.id)
+        shared_post = alice.post(:status_message, text: "to aspect only", public: false, to: alice_shared_aspect.id)
         get(
           api_v1_post_path(shared_post.guid),
           params: {

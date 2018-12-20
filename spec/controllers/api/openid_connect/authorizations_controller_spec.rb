@@ -383,9 +383,12 @@ describe Api::OpenidConnect::AuthorizationsController, type: :request do
 
     context "ensure public:read always there" do
       it "added with only openid" do
-        get new_api_openid_connect_authorization_path, params: {client_id: client.client_id,
-                                                                redirect_uri: "http://localhost:3000/", response_type: "id_token token",
-                                                                scope: "openid", nonce: 418_093_098_3, state: 418_093_098_3}
+        get new_api_openid_connect_authorization_path, params: {client_id:     client.client_id,
+                                                                redirect_uri:  "http://localhost:3000/",
+                                                                response_type: "id_token token",
+                                                                scope:         "openid",
+                                                                nonce:         418_093_098_3,
+                                                                state:         418_093_098_3}
         post api_openid_connect_authorizations_path, params: {approve: "true"}
         expect(alice.reload.authorizations.first.scopes).to include("public:read")
       end
@@ -394,33 +397,45 @@ describe Api::OpenidConnect::AuthorizationsController, type: :request do
     context "with contacts:read and private linkage requirement" do
       it "fails without contacts:read on private:read" do
         scopes = "openid private:read"
-        get new_api_openid_connect_authorization_path, params: {client_id: client.client_id,
-                                                                redirect_uri: "http://localhost:3000/", response_type: "id_token token",
-                                                                scope: scopes, nonce: 418_093_098_3, state: 418_093_098_3}
+        get new_api_openid_connect_authorization_path, params: {client_id:     client.client_id,
+                                                                redirect_uri:  "http://localhost:3000/",
+                                                                response_type: "id_token token",
+                                                                scope:         scopes,
+                                                                nonce:         418_093_098_3,
+                                                                state:         418_093_098_3}
         expect(response.status).to eq(302)
       end
 
       it "fails without contacts:read on private:modify" do
         scopes = "openid private:modify"
-        get new_api_openid_connect_authorization_path, params: {client_id: client.client_id,
-                                                                redirect_uri: "http://localhost:3000/", response_type: "id_token token",
-                                                                scope: scopes, nonce: 418_093_098_3, state: 418_093_098_3}
+        get new_api_openid_connect_authorization_path, params: {client_id:     client.client_id,
+                                                                redirect_uri:  "http://localhost:3000/",
+                                                                response_type: "id_token token",
+                                                                scope:         scopes,
+                                                                nonce:         418_093_098_3,
+                                                                state:         418_093_098_3}
         expect(response.status).to eq(302)
       end
 
       it "succeeds with contacts:read on private:read" do
         scopes = "openid contacts:read private:read"
-        get new_api_openid_connect_authorization_path, params: {client_id: client.client_id,
-                                                                redirect_uri: "http://localhost:3000/", response_type: "id_token token",
-                                                                scope: scopes, nonce: 418_093_098_3, state: 418_093_098_3}
+        get new_api_openid_connect_authorization_path, params: {client_id:     client.client_id,
+                                                                redirect_uri:  "http://localhost:3000/",
+                                                                response_type: "id_token token",
+                                                                scope:         scopes,
+                                                                nonce:         418_093_098_3,
+                                                                state:         418_093_098_3}
         expect(response.status).to eq(200)
       end
 
       it "succeeds with contacts:read on private:modify" do
         scopes = "openid contacts:read private:modify"
-        get new_api_openid_connect_authorization_path, params: {client_id: client.client_id,
-                                                                redirect_uri: "http://localhost:3000/", response_type: "id_token token",
-                                                                scope: scopes, nonce: 418_093_098_3, state: 418_093_098_3}
+        get new_api_openid_connect_authorization_path, params: {client_id:     client.client_id,
+                                                                redirect_uri:  "http://localhost:3000/",
+                                                                response_type: "id_token token",
+                                                                scope:         scopes,
+                                                                nonce:         418_093_098_3,
+                                                                state:         418_093_098_3}
         expect(response.status).to eq(200)
       end
     end

@@ -185,7 +185,7 @@ describe PostService do
       expect {
         PostService.new(alice).destroy(post.id, false)
       }.to raise_error Diaspora::NonPublic
-      expect(StatusMessage.find_by_id(post.id)).not_to be_nil
+      expect(StatusMessage.find_by(id: post.id)).not_to be_nil
     end
 
     it "will not let you destroy posts visible to you but that you do not own" do

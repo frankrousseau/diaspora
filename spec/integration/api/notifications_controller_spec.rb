@@ -3,8 +3,14 @@
 require "spec_helper"
 
 describe Api::V1::NotificationsController do
-  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
-  let(:auth_profile_only) { FactoryGirl.create(:auth_with_profile_only) }
+  let(:auth) {
+    FactoryGirl.create(:auth_with_all_scopes)
+  }
+
+  let(:auth_profile_only) {
+    FactoryGirl.create(:auth_with_profile_only)
+  }
+
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 

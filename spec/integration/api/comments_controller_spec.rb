@@ -3,8 +3,20 @@
 require "spec_helper"
 
 describe Api::V1::CommentsController do
-  let(:auth) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify private:read private:modify interactions]) }
-  let(:auth_public_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read public:modify interactions]) }
+  let(:auth) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify private:read private:modify interactions]
+    )
+  }
+
+  let(:auth_public_only) {
+    FactoryGirl.create(
+      :auth_with_profile_only,
+      scopes: %w[openid public:read public:modify interactions]
+    )
+  }
+
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
 
@@ -207,7 +219,7 @@ describe Api::V1::CommentsController do
           ),
           params: {access_token: access_token_public_only}
         )
-        expect(response.status).to eq(403)
+        expect(response.status).to eq(404)
       end
     end
   end
