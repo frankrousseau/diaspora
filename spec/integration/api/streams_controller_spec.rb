@@ -3,59 +3,93 @@
 require "spec_helper"
 
 describe Api::V1::StreamsController do
-  let(:auth) { FactoryGirl.create(:auth_with_all_scopes) }
-  let!(:access_token) { auth.create_access_token.to_s }
+  let(:auth_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read private:read contacts:read tags:read]) }
+  let(:auth_public_only_tags) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read tags:read]) }
+  let(:auth_public_only_read_only) { FactoryGirl.create(:auth_with_profile_only, scopes: %w[openid public:read]) }
+  let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
+  let!(:access_token_public_only_tags) { auth_public_only_tags.create_access_token.to_s }
+  let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
 
   before do
-    @aspect = auth.user.aspects.first
-    @created_status = auth.user.post(:status_message, text: "This is a status message #test", public: true, to: "all")
-    auth.user.like!(@created_status)
-    @status = PostService.new(auth.user).find(@created_status.id)
-  end
+    @aspect = auth_read_only.user.aspects.create(name: "new aspect")
+    auth_read_only.user.share_with(auth_public_only_read_only.user.person, @aspect)
 
-  # TODO Add contacts:read private:read checks into each of the stream checks
+    @created_status = auth_read_only.user.post(:status_message, text: "This is a status message #test", public: true, to: "all")
+    auth_read_only.user.like!(@created_status)
+    @status = PostService.new(auth_read_only.user).find(@created_status.id)
+
+    @private_post = auth_read_only.user.post(:status_message, text: "This is a private status message #test", public: false, to: @aspect.id)
+    add_tag("test", auth_read_only.user)
+    add_tag("test", auth_public_only_tags.user)
+  end
 
   describe "#aspect" do
     it "contains expected aspect message" do
       get(
         api_v1_aspects_stream_path(aspect_ids: JSON.generate([@aspect.id])),
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
       expect(response.status).to eq 200
       post = response_body_data(response)
-      expect(post.length).to eq 1
-      confirm_post_format(post[0], auth.user, @status)
+      expect(post.length).to eq 2
+      confirm_post_format(post[1], auth_read_only.user, @status)
     end
 
     it "all aspects expected aspect message" do
       get(
         api_v1_aspects_stream_path,
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
       expect(response.status).to eq 200
       post = response_body_data(response)
-      expect(post.length).to eq 1
-      confirm_post_format(post[0], auth.user, @status)
+      expect(post.length).to eq 2
+      confirm_post_format(post[1], auth_read_only.user, @status)
     end
 
     it "does not save to requested aspects to session" do
       get(
         api_v1_aspects_stream_path(a_ids: [@aspect.id]),
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
       expect(session[:a_ids]).to be_nil
+    end
+
+    it "fails without impromper credentials" do
+      get(
+        api_v1_aspects_stream_path(a_ids: [@aspect.id]),
+        params: {access_token: access_token_public_only_read_only}
+      )
+      expect(response.status).to eq(403)
     end
   end
 
   describe "#tags" do
-    it "all tags expected aspect message" do
+    it "all tags expected" do
       get(
         api_v1_followed_tags_stream_path,
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
-      expect(response.status).to eq 200
+      expect(response.status).to eq(200)
       post = response_body_data(response)
-      expect(post.length).to eq 0
+      expect(post.length).to eq(2)
+    end
+
+    it "public posts only tags expected" do
+      get(
+        api_v1_followed_tags_stream_path,
+        params: {access_token: access_token_public_only_tags}
+      )
+      expect(response.status).to eq(200)
+      post = response_body_data(response)
+      expect(post.length).to eq(2)
+    end
+
+    it "fails with impromper credentials" do
+      get(
+        api_v1_followed_tags_stream_path,
+        params: {access_token: auth_public_only_tags}
+      )
+      expect(response.status).to eq(401)
     end
   end
 
@@ -63,12 +97,12 @@ describe Api::V1::StreamsController do
     it "contains activity message" do
       get(
         api_v1_activity_stream_path,
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
       expect(response.status).to eq 200
       post = response_body_data(response)
-      expect(post.length).to eq 1
-      confirm_post_format(post[0], auth.user, @status)
+      expect(post.length).to eq 2
+      confirm_post_format(post[1], auth_read_only.user, @status)
     end
   end
 
@@ -76,12 +110,12 @@ describe Api::V1::StreamsController do
     it "contains main message" do
       get(
         api_v1_stream_path,
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
       expect(response.status).to eq 200
       post = response_body_data(response)
-      expect(post.length).to eq 1
-      confirm_post_format(post[0], auth.user, @status)
+      expect(post.length).to eq 2
+      confirm_post_format(post[1], auth_read_only.user, @status)
     end
   end
 
@@ -89,7 +123,7 @@ describe Api::V1::StreamsController do
     it "contains commented message" do
       get(
         api_v1_commented_stream_path,
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
       expect(response.status).to eq 200
       post = response_body_data(response)
@@ -101,7 +135,7 @@ describe Api::V1::StreamsController do
     it "contains mentions message" do
       get(
         api_v1_mentions_stream_path,
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
       expect(response.status).to eq 200
       post = response_body_data(response)
@@ -113,12 +147,12 @@ describe Api::V1::StreamsController do
     it "contains liked message" do
       get(
         api_v1_liked_stream_path,
-        params: {access_token: access_token}
+        params: {access_token: access_token_read_only}
       )
       expect(response.status).to eq 200
       post = response_body_data(response)
       expect(post.length).to eq 1
-      confirm_post_format(post[0], auth.user, @status)
+      confirm_post_format(post[0], auth_read_only.user, @status)
     end
   end
 
@@ -211,4 +245,12 @@ describe Api::V1::StreamsController do
   def response_body_data(response)
     JSON.parse(response.body)["data"]
   end
+
+  def add_tag(name, user)
+    tag = ActsAsTaggableOn::Tag.find_or_create_by(name: name)
+    tag_following = user.tag_followings.new(tag_id: tag.id)
+    tag_following.save
+    tag_following
+  end
+
 end

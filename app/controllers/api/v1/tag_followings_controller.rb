@@ -11,10 +11,6 @@ module Api
         require_access_token %w[tags:modify]
       end
 
-      rescue_from StandardError do
-        render json: I18n.t("api.endpoint_errors.tags.cant_process"), status: :bad_request
-      end
-
       def index
         render json: tag_followings_service.index.map(&:name)
       end
@@ -22,6 +18,8 @@ module Api
       def create
         tag_followings_service.create(params.require(:name))
         head :no_content
+      rescue StandardError
+        render json: I18n.t("api.endpoint_errors.tags.cant_process"), status: :unprocessable_entity
       end
 
       def destroy

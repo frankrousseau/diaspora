@@ -7,6 +7,14 @@ module Api
         require_access_token %w[public:read]
       end
 
+      before_action only: %w[aspects] do
+        require_access_token %w[contacts:read private:read]
+      end
+
+      before_action only: %w[followed_tags] do
+        require_access_token %w[tags:read]
+      end
+
       def aspects
         aspect_ids = params.has_key?(:aspect_ids) ? JSON.parse(params[:aspect_ids]) : []
         @stream = Stream::Aspect.new(current_user, aspect_ids, max_time: stream_max_time)
@@ -40,11 +48,20 @@ module Api
       private
 
       def stream_responder(stream_klass=nil, query_time_field="posts.created_at", data_time_field="created_at")
-        @stream = stream_klass.present? ? stream_klass.new(current_user, max_time: stream_max_time) : @stream
+        user = if has_private_read
+                 current_user
+               else
+                 nil
+               end
+        @stream = stream_klass.present? ? stream_klass.new(user, max_time: stream_max_time) : @stream
         posts_page = pager(@stream.stream_posts, query_time_field, data_time_field).response
         posts_page[:data] = posts_page[:data].map {|post| PostPresenter.new(post, current_user).as_api_response }
         posts_page[:links].delete(:previous)
         render json: posts_page
+      rescue Exception=>e
+        puts e
+        puts e.backtrace
+        raise
       end
 
       def stream_max_time
