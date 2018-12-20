@@ -380,7 +380,6 @@ describe Api::V1::UsersController do
           params: {access_token: access_token_public_only_read_only}
         )
         expect(response.status).to eq(200)
-        puts response.body
         photos = response_body_data(response)
         expect(photos.length).to eq(2)
         guids = photos.map {|photo| photo["guid"] }
