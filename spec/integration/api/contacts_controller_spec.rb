@@ -79,6 +79,15 @@ describe Api::V1::ContactsController do
     end
 
     context "improper credentials" do
+      it "fails without contacts:read" do
+        aspect = auth_profile_only.user.aspects.create(name: "new aspect")
+        get(
+          api_v1_aspect_contacts_path(aspect.id),
+          params: {access_token: access_token_profile_only}
+        )
+        expect(response.status).to eq(403)
+      end
+
       it "fails when not logged in" do
         get(
           api_v1_aspect_contacts_path(@aspect2.id),
@@ -227,8 +236,10 @@ describe Api::V1::ContactsController do
       end
 
       it "fails when only read only token" do
+        aspect = auth_read_only.user.aspects.create(name:"new")
+        aspects_membership_service(auth_read_only.user).create(aspect.id, alice.person.id)
         delete(
-          api_v1_aspect_contact_path(@aspect2.id, alice.guid),
+          api_v1_aspect_contact_path(aspect.id, alice.guid),
           params: {access_token: access_token_read_only}
         )
         expect(response.status).to eq(403)
