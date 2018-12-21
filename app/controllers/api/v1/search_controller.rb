@@ -12,8 +12,6 @@ module Api
       end
 
       def user_index
-        parameters = params.permit(:tag, :name_or_handle)
-        raise RuntimeError if parameters.keys.length != 1
         user_page = index_pager(people_query).response
         user_page[:data] = user_page[:data].map {|p| PersonPresenter.new(p).as_api_json }
         render json: user_page
@@ -32,6 +30,9 @@ module Api
       end
 
       def people_query
+        parameters = params.permit(:tag, :name_or_handle)
+        raise RuntimeError if parameters.keys.length != 1
+
         if params.has_key?(:tag)
           Person.profile_tagged_with(params[:tag])
         else
