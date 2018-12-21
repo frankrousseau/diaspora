@@ -3,7 +3,7 @@
 module Api
   module V1
     class CommentsController < Api::V1::BaseController
-      before_action do
+      before_action except: %i[create destroy] do
         require_access_token %w[interactions public:read]
       end
 
@@ -20,18 +20,18 @@ module Api
       end
 
       def create
-        @comment = comment_service.create(params[:post_id], params[:body])
-        comment = comment_as_json(@comment)
+        comment = comment_service.create(params.require(:post_id), params.require(:body))
       rescue ActiveRecord::RecordNotFound
         render json: I18n.t("api.endpoint_errors.posts.post_not_found"), status: :not_found
       else
-        render json: comment, status: :created
+        render json: comment_as_json(comment), status: :created
       end
 
       def index
         find_post
-        comments_query = comment_service.find_for_post(params[:post_id])
+        comments_query = comment_service.find_for_post(params.require(:post_id))
         params[:after] = Time.utc(1900).iso8601 if params.permit(:before, :after).empty?
+
         comments_page = time_pager(comments_query).response
         comments_page[:data] = comments_page[:data].map {|x| comment_as_json(x) }
         render json: comments_page
@@ -39,7 +39,7 @@ module Api
 
       def destroy
         find_post
-        if comment_and_post_validate(params[:post_id], params[:id])
+        if comment_and_post_validate(params.require(:post_id), params[:id])
           comment_service.destroy!(params[:id])
           head :no_content
         end
@@ -52,6 +52,7 @@ module Api
         post_guid = params.require(:post_id)
         comment_guid = params.require(:comment_id)
         return unless comment_and_post_validate(post_guid, comment_guid)
+
         reason = params.require(:reason)
         comment = comment_service.find!(comment_guid)
         report = current_user.reports.new(
@@ -108,7 +109,9 @@ module Api
       def find_post(use_invalid=false)
         post = post_service.find!(params[:post_id])
         return post if post.public? || private_read?
+
         raise ActiveRecord::RecordInvalid if use_invalid
+
         raise ActiveRecord::RecordNotFound
       end
     end
