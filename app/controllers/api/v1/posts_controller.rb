@@ -70,9 +70,8 @@ module Api
         photo_guids = params[:photos]
         return if photo_guids.empty?
 
-        photos = photo_guids
-                   .map {|guid| Photo.find_by!(guid: guid) }
-                   .select{|p| p.author_id == current_user.person.id && p.pending}
+        photos = photo_guids.map {|guid| Photo.find_by!(guid: guid) }
+                            .select {|p| p.author_id == current_user.person.id && p.pending }
         raise InvalidArgument if photos.length != photo_guids.length
 
         mapped_parameters[:photos] = photos

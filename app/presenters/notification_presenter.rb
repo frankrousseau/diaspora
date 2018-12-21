@@ -20,7 +20,7 @@ class NotificationPresenter < BasePresenter
   end
 
   def target_json
-    json = {guid: linked_object.guid }
+    json = {guid: linked_object.guid}
     json[:author] = PersonPresenter.new(linked_object.author).as_api_json if linked_object.author
     json
   end
