@@ -24,6 +24,7 @@ describe Api::V1::AspectsController do
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let(:invalid_token) { SecureRandom.hex(9) }
 
   before do
     @aspect1 = auth.user.aspects.create(name: "first aspect")
@@ -58,7 +59,7 @@ describe Api::V1::AspectsController do
       it "fails if invalid token" do
         get(
           api_v1_aspects_path,
-          params: {access_token: "999_999_999"}
+          params: {access_token: invalid_token}
         )
         expect(response.status).to eq(401)
       end
@@ -104,7 +105,7 @@ describe Api::V1::AspectsController do
       it "fails when not logged in" do
         get(
           api_v1_aspect_path(@aspect2.id),
-          params: {access_token: "999_999_999"}
+          params: {access_token: invalid_token}
         )
         expect(response.status).to eq(401)
       end
@@ -165,7 +166,7 @@ describe Api::V1::AspectsController do
       it "fails when not logged in" do
         post(
           api_v1_aspects_path,
-          params: {name: "new_name", chat_enabled: true, access_token: "999_999_999"}
+          params: {name: "new_name", chat_enabled: true, access_token: invalid_token}
         )
         expect(response.status).to eq(401)
       end
@@ -279,7 +280,7 @@ describe Api::V1::AspectsController do
       it "fails when not logged in" do
         patch(
           api_v1_aspect_path(@aspect2.id),
-          params: {access_token: "999_999_999"}
+          params: {access_token: invalid_token}
         )
         expect(response.status).to eq(401)
       end
@@ -321,7 +322,7 @@ describe Api::V1::AspectsController do
       it "fails when not logged in" do
         delete(
           api_v1_aspect_path(@aspect2.id),
-          params: {access_token: "999_999_999"}
+          params: {access_token: invalid_token}
         )
         expect(response.status).to eq(401)
       end

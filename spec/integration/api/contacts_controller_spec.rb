@@ -24,6 +24,7 @@ describe Api::V1::ContactsController do
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let(:invalid_token) { SecureRandom.hex(9) }
 
   before do
     @aspect1 = auth.user.aspects.create(name: "generic")
@@ -91,7 +92,7 @@ describe Api::V1::ContactsController do
       it "fails when not logged in" do
         get(
           api_v1_aspect_contacts_path(@aspect2.id),
-          params: {access_token: "999_999_999"}
+          params: {access_token: invalid_token}
         )
         expect(response.status).to eq(401)
       end
@@ -155,7 +156,7 @@ describe Api::V1::ContactsController do
       it "fails when not logged in" do
         post(
           api_v1_aspect_contacts_path(@aspect2.id),
-          params: {person_guid: alice.guid, access_token: "999_999_999"}
+          params: {person_guid: alice.guid, access_token: invalid_token}
         )
         expect(response.status).to eq(401)
       end
@@ -230,7 +231,7 @@ describe Api::V1::ContactsController do
       it "fails when not logged in" do
         delete(
           api_v1_aspect_contact_path(@aspect2.id, alice.guid),
-          params: {access_token: "999_999_999"}
+          params: {access_token: invalid_token}
         )
         expect(response.status).to eq(401)
       end
