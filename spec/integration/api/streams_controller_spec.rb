@@ -5,21 +5,21 @@ require "spec_helper"
 describe Api::V1::StreamsController do
   let(:auth_read_only) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid public:read private:read contacts:read tags:read]
     )
   }
 
   let(:auth_public_only_tags) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid public:read tags:read]
     )
   }
 
   let(:auth_public_only_read_only) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid public:read]
     )
   }

@@ -8,7 +8,7 @@ describe Api::V1::NotificationsController do
   }
 
   let(:auth_profile_only) {
-    FactoryGirl.create(:auth_with_profile_only)
+    FactoryGirl.create(:auth_with_default_scopes)
   }
 
   let!(:access_token) { auth.create_access_token.to_s }

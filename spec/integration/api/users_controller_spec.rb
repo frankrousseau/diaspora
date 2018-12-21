@@ -11,34 +11,34 @@ describe Api::V1::UsersController do
 
   let(:auth) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: full_scopes
     )
   }
 
   let(:auth_public_only) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid public:read public:modify]
     )
   }
 
   let(:auth_read_only) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid public:read private:read contacts:read profile]
     )
   }
 
   let(:auth_public_only_read_only) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid public:read]
     )
   }
 
   let(:auth_profile_only) {
-    FactoryGirl.create(:auth_with_profile_only)
+    FactoryGirl.create(:auth_with_default_scopes)
   }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
@@ -145,7 +145,7 @@ describe Api::V1::UsersController do
           "/api/v1/users/#{unsearchable_user.guid}",
           params: {access_token: access_token_profile_only}
         )
-        expect(response.status).to eq(404)
+        expect(response.status).to eq(403)
       end
 
       it "fails with invalid user GUID" do

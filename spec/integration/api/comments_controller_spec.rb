@@ -5,20 +5,20 @@ require "spec_helper"
 describe Api::V1::CommentsController do
   let(:auth) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid public:read public:modify private:read interactions]
     )
   }
 
   let(:auth_public_only) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid public:read public:modify interactions]
     )
   }
 
   let(:auth_profile_only) {
-    FactoryGirl.create(:auth_with_profile_only)
+    FactoryGirl.create(:auth_with_default_scopes)
   }
 
   let!(:access_token) { auth.create_access_token.to_s }

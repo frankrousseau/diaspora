@@ -5,7 +5,7 @@ require "spec_helper"
 describe Api::V1::ConversationsController do
   let(:auth) {
     FactoryGirl.create(
-      :auth_with_profile_only,
+      :auth_with_default_scopes,
       scopes: %w[openid conversations]
     )
   }
@@ -15,7 +15,7 @@ describe Api::V1::ConversationsController do
   }
 
   let(:auth_profile_only) {
-    FactoryGirl.create(:auth_with_profile_only)
+    FactoryGirl.create(:auth_with_default_scopes)
   }
 
   let!(:access_token) { auth.create_access_token.to_s }
