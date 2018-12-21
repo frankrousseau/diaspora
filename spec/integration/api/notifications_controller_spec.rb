@@ -18,10 +18,15 @@ describe Api::V1::NotificationsController do
     @post = auth.user.post(
       :status_message,
       text:   "This is a status message",
-      public: true,
-      to:     "all"
+      public: true
+    )
+
+    @mentioned_post = alice.post(
+      :status_message,
+      text: "This is a status message mentioning @{#{auth.user.diaspora_handle}}"
     )
     @notification = FactoryGirl.create(:notification, recipient: auth.user, target: @post)
+    @mentioned = FactoryGirl.create(:notification_mentioned_in_comment, recipient: auth.user, target: @post)
   end
 
   describe "#index" do
@@ -33,8 +38,8 @@ describe Api::V1::NotificationsController do
         )
         expect(response.status).to eq(200)
         notification = response_body_data(response)
-        expect(notification.length).to eq(1)
-        confirm_notification_format(notification[0], @notification, "also_commented", nil)
+        expect(notification.length).to eq(2)
+        confirm_notification_format(notification[1], @notification, "also_commented", nil)
       end
 
       it "with proper credentials and unread only" do
@@ -44,7 +49,7 @@ describe Api::V1::NotificationsController do
         )
         expect(response.status).to eq(200)
         notification = response_body_data(response)
-        expect(notification.length).to eq(1)
+        expect(notification.length).to eq(2)
         @notification.set_read_state(true)
         get(
           api_v1_notifications_path,
@@ -52,7 +57,7 @@ describe Api::V1::NotificationsController do
         )
         expect(response.status).to eq(200)
         notification = response_body_data(response)
-        expect(notification.length).to eq(0)
+        expect(notification.length).to eq(1)
       end
 
       it "with proper credentials and after certain date" do
@@ -62,7 +67,7 @@ describe Api::V1::NotificationsController do
         )
         expect(response.status).to eq(200)
         notification = response_body_data(response)
-        expect(notification.length).to eq(1)
+        expect(notification.length).to eq(2)
         @notification.set_read_state(true)
         get(
           api_v1_notifications_path,
