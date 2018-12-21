@@ -16,24 +16,12 @@ class PhotoService
     raise RuntimeError if @deny_raw_files && !confirm_uploaded_file_settings(uploaded_file)
     photo_params[:user_file] = uploaded_file
 
-    @photo = @user.build_post(:photo, photo_params)
-    raise RuntimeError unless @photo.save
-    unless @photo.pending
-      unless @photo.public?
-        aspects = @user.aspects_from_ids(photo_params[:aspect_ids])
-        @user.add_to_streams(@photo, aspects)
-      end
-      @user.dispatch_post(@photo, to: photo_params[:aspect_ids])
-    end
+    photo = @user.build_post(:photo, photo_params)
+    raise RuntimeError unless photo.save
 
-    if photo_params[:set_profile_photo]
-      profile_params = {image_url:        @photo.url(:thumb_large),
-                        image_url_medium: @photo.url(:thumb_medium),
-                        image_url_small:  @photo.url(:thumb_small)}
-      @user.update_profile(profile_params)
-    end
-
-    @photo
+    send_messages(photo, photo_params)
+    update_profile_photo(photo) if photo_params[:set_profile_photo]
+    photo
   end
 
   private
@@ -53,7 +41,29 @@ class PhotoService
       return false
     end
     return false if uploaded_file.original_filename.empty?
+
     return false if uploaded_file.content_type.empty?
+
     true
+  end
+
+  def send_messages(photo, photo_params)
+    send_to_streams(photo, photo_params) unless photo.pending && photo.public?
+
+    @user.dispatch_post(photo, to: photo_params[:aspect_ids]) unless pending
+  end
+
+  def update_profile_photo(photo)
+    profile_params = {
+      image_url:        photo.url(:thumb_large),
+      image_url_medium: photo.url(:thumb_medium),
+      image_url_small:  photo.url(:thumb_small)
+    }
+    @user.update_profile(profile_params)
+  end
+
+  def send_to_streams(photo, photo_params)
+    aspects = @user.aspects_from_ids(photo_params[:aspect_ids])
+    @user.add_to_streams(photo, aspects)
   end
 end

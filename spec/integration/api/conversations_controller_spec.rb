@@ -22,7 +22,6 @@ describe Api::V1::ConversationsController do
   let!(:access_token_participant) { auth_participant.create_access_token.to_s }
   let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
 
-
   before do
     auth.user.aspects.create(name: "first")
     auth.user.share_with alice.person, auth.user.aspects[0]

@@ -31,13 +31,13 @@ module Api
 
       def create
         params.require(%i[subject body recipients])
-        recipient_ids = params[:recipients].map {|p| Person.find_from_guid_or_username(id: p).id }
+        recipients = recipient_ids
         conversation = conversation_service.build(
           params[:subject],
           params[:body],
-          recipient_ids
+          recipients
         )
-        raise ActiveRecord::RecordInvalid unless conversation.participants.length == (recipient_ids.length + 1)
+        raise ActiveRecord::RecordInvalid unless conversation_valid?(conversation, recipients)
         conversation.save!
         Diaspora::Federation::Dispatcher.defer_dispatch(
           current_user,
@@ -67,6 +67,14 @@ module Api
 
       def pager(query, sort_field)
         Api::Paging::RestPaginatorBuilder.new(query, request).time_pager(params, sort_field)
+      end
+
+      def recipient_ids
+        params[:recipients].map {|p| Person.find_from_guid_or_username(id: p).id }
+      end
+
+      def conversation_valid?(conversation, recipients)
+        conversation.participants.length == (recipients.length + 1)
       end
     end
   end

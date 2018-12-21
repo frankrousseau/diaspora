@@ -29,7 +29,9 @@ module Api
       def show
         photo = photo_service.visible_photo(params.require(:id))
         raise ActiveRecord::RecordNotFound unless photo
+
         raise ActiveRecord::RecordNotFound unless photo.public? || private_read?
+
         render json: PhotoPresenter.new(photo).as_api_json(true)
       end
 
