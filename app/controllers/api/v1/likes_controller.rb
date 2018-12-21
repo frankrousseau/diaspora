@@ -20,7 +20,7 @@ module Api
       end
 
       def show
-        post = post_service.find!(params[:post_id])
+        post = post_service.find!(params.require(:post_id))
         raise ActiveRecord::RecordInvalid unless post.public? || private_read?
 
         likes_query = like_service.find_for_post(params[:post_id])
@@ -30,7 +30,7 @@ module Api
       end
 
       def create
-        post = post_service.find!(params[:post_id])
+        post = post_service.find!(params.require(:post_id))
         raise ActiveRecord::RecordInvalid unless post.public? || private_modify?
 
         like_service.create(params[:post_id])
@@ -44,7 +44,7 @@ module Api
       end
 
       def destroy
-        post = post_service.find!(params[:post_id])
+        post = post_service.find!(params.require(:post_id))
         raise ActiveRecord::RecordInvalid unless post.public? || private_modify?
 
         success = like_service.unlike_post(params[:post_id])
