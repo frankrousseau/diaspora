@@ -3,7 +3,7 @@
 class ContactPresenter < BasePresenter
   def base_hash
     {
-      id: id,
+      id:        id,
       person_id: person_id
     }
   end
