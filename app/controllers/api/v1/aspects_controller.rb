@@ -67,6 +67,7 @@ module Api
       def aspect_params(allow_order=false)
         parameters = params.permit(:name, :chat_enabled)
         parameters[:order_id] = params[:order] if params.has_key?(:order) && allow_order
+
         parameters
       end
     end

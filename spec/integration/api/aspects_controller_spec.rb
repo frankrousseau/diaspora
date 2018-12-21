@@ -46,20 +46,22 @@ describe Api::V1::AspectsController do
       end
     end
 
-    it "fails if token doesn't have contacts:read" do
-      get(
-        api_v1_aspects_path,
-        params: {access_token: access_token_profile_only}
-      )
-      expect(response.status).to eq(403)
-    end
+    context "without impromper credentials" do
+      it "fails if token doesn't have contacts:read" do
+        get(
+          api_v1_aspects_path,
+          params: {access_token: access_token_profile_only}
+        )
+        expect(response.status).to eq(403)
+      end
 
-    it "fails if invalid token" do
-      get(
-        api_v1_aspects_path,
-        params: {access_token: "999_999_999"}
-      )
-      expect(response.status).to eq(401)
+      it "fails if invalid token" do
+        get(
+          api_v1_aspects_path,
+          params: {access_token: "999_999_999"}
+        )
+        expect(response.status).to eq(401)
+      end
     end
   end
 
@@ -90,18 +92,16 @@ describe Api::V1::AspectsController do
       end
     end
 
-    context "without contacts:read in token" do
-      it "fails to return with error" do
+    context "without impromper credentials" do
+      it "fails without contacts:read in token" do
         get(
           api_v1_aspect_path(@aspect2.id),
           params: {access_token: access_token_profile_only}
         )
         expect(response.status).to eq(403)
       end
-    end
 
-    context "when not logged in" do
-      it "fails to return with error" do
+      it "fails when not logged in" do
         get(
           api_v1_aspect_path(@aspect2.id),
           params: {access_token: "999_999_999"}
@@ -186,17 +186,17 @@ describe Api::V1::AspectsController do
       it "updates full aspect" do
         new_name = "NewAspectName"
         new_chat = @aspect2.chat_enabled
-        order = @aspect2.order_id + 1
+        new_order = @aspect2.order_id + 1
         patch(
           api_v1_aspect_path(@aspect2.id),
-          params: {name: new_name, chat_enabled: new_chat, order: order, access_token: access_token}
+          params: {name: new_name, chat_enabled: new_chat, order: new_order, access_token: access_token}
         )
 
         expect(response.status).to eq(200)
         aspect = JSON.parse(response.body)
         expect(aspect["name"]).to eq(new_name)
         expect(aspect["chat_enabled"]).to eq(new_chat)
-        expect(aspect["order"]).to eq(order)
+        expect(aspect["order"]).to eq(new_order)
         expect(aspect["id"]).to eq(@aspect2.id)
       end
 
@@ -227,15 +227,15 @@ describe Api::V1::AspectsController do
       end
 
       it "updates order only" do
-        order = @aspect2.order_id + 1
+        new_order = @aspect2.order_id + 1
         patch(
           api_v1_aspect_path(@aspect2.id),
-          params: {order: order, access_token: access_token}
+          params: {order: new_order, access_token: access_token}
         )
 
         expect(response.status).to eq(200)
         aspect = JSON.parse(response.body)
-        expect(aspect["order"]).to eq(order)
+        expect(aspect["order"]).to eq(new_order)
         expect(aspect["id"]).to eq(@aspect2.id)
       end
 
@@ -302,6 +302,7 @@ describe Api::V1::AspectsController do
           params: {access_token: access_token}
         )
         expect(response.status).to eq(204)
+        expect(auth.user.aspects.find_by(id: @aspect2.id)).to be_nil
       end
     end
 
