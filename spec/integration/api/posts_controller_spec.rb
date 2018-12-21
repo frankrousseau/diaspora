@@ -37,19 +37,15 @@ describe Api::V1::PostsController do
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
   let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
+  let(:invalid_token) { SecureRandom.hex(9) }
 
-  let(:alice_aspect) { alice.aspects.first }
-
-  let(:alice_photo1) {
-    alice.build_post(:photo, pending: true, user_file: File.open(photo_fixture_name), to: alice_aspect.id).tap(&:save!)
-  }
-
-  let(:alice_photo2) {
-    alice.build_post(:photo, pending: true, user_file: File.open(photo_fixture_name), to: alice_aspect.id).tap(&:save!)
-  }
-
-  let(:alice_photo_ids) { [alice_photo1.id.to_s, alice_photo2.id.to_s] }
-  let(:alice_photo_guids) { [alice_photo1.guid, alice_photo2.guid] }
+  before do
+    @alice_aspect = alice.aspects.first
+    @alice_photo1 = alice.post(:photo, pending: true, user_file: File.open(photo_fixture_name), to: @alice_aspect.id)
+    @alice_photo2 = alice.post(:photo, pending: true, user_file: File.open(photo_fixture_name), to: @alice_aspect.id)
+    @alice_photo_ids = [@alice_photo1.id.to_s, @alice_photo2.id.to_s]
+    @alice_photo_guids = [@alice_photo1.guid, @alice_photo2.guid]
+  end
 
   describe "#show" do
     before do
@@ -82,7 +78,7 @@ describe Api::V1::PostsController do
         location_params = {location_address: "somewhere", location_coords: "1,2"}
         merged_params = base_params.merge(location_params)
         merged_params = merged_params.merge(poll_params)
-        merged_params = merged_params.merge(photos: alice_photo_ids)
+        merged_params = merged_params.merge(photos: @alice_photo_ids)
         status_message = StatusMessageCreationService.new(alice).create(merged_params)
 
         get(
@@ -164,28 +160,35 @@ describe Api::V1::PostsController do
         expect(response.body).to eq(I18n.t("api.endpoint_errors.posts.post_not_found"))
       end
     end
+
+    context "access with invalid token" do
+      it "fails" do
+        get(
+          api_v1_post_path(@status.guid),
+          params: {
+            access_token: invalid_token
+          }
+        )
+        expect(response.status).to eq(401)
+      end
+    end
+
   end
 
   describe "#create" do
-    let(:user_photo1) {
-      auth.user.build_post(:photo, pending: true,
-                                               user_file: File.open(photo_fixture_name), to: "all").tap(&:save!)
-    }
-    let(:user_photo2) {
-      auth.user.build_post(:photo, pending: true,
-                                               user_file: File.open(photo_fixture_name), to: "all").tap(&:save!)
-    }
-
-    let(:user_photo_ids) { [user_photo1.id.to_s, user_photo2.id.to_s] }
-    let(:user_photo_guids) { [user_photo1.guid, user_photo2.guid] }
+    before do
+      @user_photo1 = auth.user.post(:photo, pending: true, user_file: File.open(photo_fixture_name), public: true)
+      @user_photo2 = auth.user.post(:photo, pending: true, user_file: File.open(photo_fixture_name), public: true)
+      @user_photo_ids = [@user_photo1.id.to_s, @user_photo2.id.to_s]
+      @user_photo_guids = [@user_photo1.guid, @user_photo2.guid]
+    end
 
     context "when given read-write access token" do
       it "creates a public post" do
         post_for_ref_only = auth.user.post(
           :status_message,
           text:   "Hello this is a public post!",
-          public: true,
-          to:     "all"
+          public: true
         )
 
         post(
@@ -243,7 +246,7 @@ describe Api::V1::PostsController do
       it "creates with photos" do
         message_text = "Post with photos"
         base_params = {status_message: {text: message_text}, public: true}
-        merged_params = base_params.merge(photos: user_photo_ids)
+        merged_params = base_params.merge(photos: @user_photo_ids)
         post_for_ref_only = StatusMessageCreationService.new(auth.user).create(merged_params)
 
         post(
@@ -252,7 +255,7 @@ describe Api::V1::PostsController do
             access_token: access_token,
             body:         message_text,
             public:       true,
-            photos:       user_photo_guids
+            photos:       @user_photo_guids
           }
         )
         expect(response.status).to eq(200)
@@ -269,7 +272,7 @@ describe Api::V1::PostsController do
             access_token: access_token,
             body:         message_text,
             public:       true,
-            photos:       alice_photo_guids
+            photos:       @alice_photo_guids
           }
         )
         expect(response.status).to eq(200)
@@ -277,7 +280,7 @@ describe Api::V1::PostsController do
         expect(post["photos"].empty?).to be_truthy
       end
 
-      it "fails to add bad guid" do
+      it "fails to add bad photo guids" do
         message_text = "Post with photos"
 
         post(
@@ -434,17 +437,6 @@ describe Api::V1::PostsController do
       end
     end
 
-    # TODO: Add when doing reshares endpoint
-    xcontext "when reshared" do
-      it "creates post with identical fields plus root" do
-        raise NotImplementedError
-      end
-
-      it "fails to reshare post user can't see" do
-        raise NotImplementedError
-      end
-    end
-
     context "when given missing format" do
       it "fails when no body" do
         post(
@@ -517,8 +509,8 @@ describe Api::V1::PostsController do
       end
     end
 
-    context "when given read only access token" do
-      it "doesn't create the post" do
+    context "improper credentials" do
+      it "fails without modify token" do
         post(
           api_v1_posts_path,
           params: {
@@ -528,6 +520,18 @@ describe Api::V1::PostsController do
           }
         )
         expect(response.status).to eq(403)
+      end
+
+      it "fails without invalid token" do
+        post(
+          api_v1_posts_path,
+          params: {
+            access_token:   invalid_token,
+            status_message: {text: "Hello this is a post!"},
+            public:         true
+          }
+        )
+        expect(response.status).to eq(401)
       end
     end
   end
@@ -562,6 +566,22 @@ describe Api::V1::PostsController do
         )
 
         expect(response.status).to eq(403)
+      end
+    end
+
+    context "when given invalid token" do
+      it "doesn't delete the post" do
+        @status = auth.user.post(
+          :status_message,
+          text:   "hello",
+          public: true
+        )
+        delete(
+          api_v1_post_path(@status.guid),
+          params: {access_token: invalid_token}
+        )
+
+        expect(response.status).to eq(401)
       end
     end
 
