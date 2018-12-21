@@ -24,6 +24,7 @@ describe Api::V1::PostInteractionsController do
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
   let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
+  let(:invalid_token) { SecureRandom.hex(9) }
 
   before do
     @status = alice.post(
@@ -109,7 +110,7 @@ describe Api::V1::PostInteractionsController do
         post(
           api_v1_post_subscribe_path(@status.guid),
           params: {
-            access_token: "999_999_999"
+            access_token: invalid_token
           }
         )
         expect(response.status).to eq(401)
@@ -168,7 +169,7 @@ describe Api::V1::PostInteractionsController do
         post(
           api_v1_post_hide_path(@status.guid),
           params: {
-            access_token: "999_999_999"
+            access_token: invalid_token
           }
         )
         expect(response.status).to eq(401)
@@ -254,7 +255,7 @@ describe Api::V1::PostInteractionsController do
         post(
           api_v1_post_mute_path(@status.guid),
           params: {
-            access_token: "999_999_999"
+            access_token: invalid_token
           }
         )
         expect(response.status).to eq(401)
@@ -349,7 +350,7 @@ describe Api::V1::PostInteractionsController do
           api_v1_post_report_path(@status.guid),
           params: {
             reason:       "My reason",
-            access_token: "999_999_999"
+            access_token: invalid_token
           }
         )
         expect(response.status).to eq(401)
@@ -449,7 +450,7 @@ describe Api::V1::PostInteractionsController do
         api_v1_post_vote_path(@poll_post.guid),
         params: {
           poll_answer_id: @poll_answer.id,
-          access_token:   "999_999_999"
+          access_token:   invalid_token
         }
       )
       expect(response.status).to eq(401)
