@@ -4,7 +4,7 @@ module Api
   module V1
     class CommentsController < Api::V1::BaseController
       before_action except: %i[create destroy] do
-        require_access_token %w[interactions public:read]
+        require_access_token %w[public:read]
       end
 
       before_action only: %i[create destroy] do
@@ -20,6 +20,7 @@ module Api
       end
 
       def create
+        find_post
         comment = comment_service.create(params.require(:post_id), params.require(:body))
       rescue ActiveRecord::RecordNotFound
         render json: I18n.t("api.endpoint_errors.posts.post_not_found"), status: :not_found

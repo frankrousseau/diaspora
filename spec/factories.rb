@@ -406,7 +406,7 @@ FactoryGirl.define do
   factory :auth_with_profile_only, class: Api::OpenidConnect::Authorization do
     o_auth_application
     user
-    scopes %w[openid profile]
+    scopes %w[openid profile public:read]
     after(:build) {|m|
       m.redirect_uri = m.o_auth_application.redirect_uris[0]
     }
