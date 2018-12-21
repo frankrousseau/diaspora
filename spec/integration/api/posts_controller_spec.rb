@@ -178,6 +178,7 @@ describe Api::V1::PostsController do
     before do
       @user_photo1 = auth.user.post(:photo, pending: true, user_file: File.open(photo_fixture_name), public: true)
       @user_photo2 = auth.user.post(:photo, pending: true, user_file: File.open(photo_fixture_name), public: true)
+      @user_photo3 = auth.user.post(:photo, pending: false, user_file: File.open(photo_fixture_name), public: true)
       @user_photo_ids = [@user_photo1.id.to_s, @user_photo2.id.to_s]
       @user_photo_guids = [@user_photo1.guid, @user_photo2.guid]
     end
@@ -244,9 +245,6 @@ describe Api::V1::PostsController do
     context "with fully populated post" do
       it "creates with photos" do
         message_text = "Post with photos"
-        base_params = {status_message: {text: message_text}, public: true}
-        merged_params = base_params.merge(photos: @user_photo_ids)
-        post_for_ref_only = StatusMessageCreationService.new(auth.user).create(merged_params)
 
         post(
           api_v1_posts_path,
@@ -259,6 +257,15 @@ describe Api::V1::PostsController do
         )
         expect(response.status).to eq(200)
         post = response_body(response)
+
+        @user_photo1[:pending] = true
+        @user_photo1.save
+        @user_photo2[:pending] = true
+        @user_photo2.save
+        base_params = {status_message: {text: message_text}, public: true}
+        merged_params = base_params.merge(photos: @user_photo_ids)
+        post_for_ref_only = StatusMessageCreationService.new(auth.user).create(merged_params)
+
         confirm_post_format(post, auth.user, post_for_ref_only)
       end
 
@@ -274,9 +281,22 @@ describe Api::V1::PostsController do
             photos:       @alice_photo_guids
           }
         )
-        expect(response.status).to eq(200)
-        post = JSON.parse(response.body)
-        expect(post["photos"].empty?).to be_truthy
+        expect(response.status).to eq(422)
+      end
+
+      it "fails to add non-pending photos" do
+        message_text = "Post with photos"
+
+        post(
+          api_v1_posts_path,
+          params: {
+            access_token: access_token,
+            body:         message_text,
+            public:       true,
+            photos:       [@user_photo3.guid]
+          }
+        )
+        expect(response.status).to eq(422)
       end
 
       it "fails to add bad photo guids" do

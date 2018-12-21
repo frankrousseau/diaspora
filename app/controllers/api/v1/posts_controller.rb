@@ -70,10 +70,12 @@ module Api
         photo_guids = params[:photos]
         return if photo_guids.empty?
 
-        photo_ids = photo_guids.map {|guid| Photo.find_by!(guid: guid) }
-        raise InvalidArgument if photo_ids.length != photo_guids.length
+        photos = photo_guids
+                   .map {|guid| Photo.find_by!(guid: guid) }
+                   .select{|p| p.author_id == current_user.person.id && p.pending}
+        raise InvalidArgument if photos.length != photo_guids.length
 
-        mapped_parameters[:photos] = photo_ids
+        mapped_parameters[:photos] = photos
       end
 
       def add_poll_params(mapped_parameters)
