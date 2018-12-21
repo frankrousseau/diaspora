@@ -17,10 +17,10 @@ describe Api::V1::TagFollowingsController do
     )
   }
 
-  let(:auth_profile_only) { FactoryGirl.create(:auth_with_default_scopes) }
+  let(:auth_minimum_scopes) { FactoryGirl.create(:auth_with_default_scopes) }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
-  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
 
   before do
     @expected_tags = %w[tag1 tag2 tag3]
@@ -109,7 +109,7 @@ describe Api::V1::TagFollowingsController do
       it "insufficient scopes in token" do
         get(
           api_v1_tag_followings_path,
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end

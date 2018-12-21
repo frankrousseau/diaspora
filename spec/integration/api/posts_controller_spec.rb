@@ -31,12 +31,12 @@ describe Api::V1::PostsController do
     )
   }
 
-  let(:auth_profile_only) { FactoryGirl.create(:auth_with_default_scopes) }
+  let(:auth_minimum_scopes) { FactoryGirl.create(:auth_with_default_scopes) }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
-  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
 
   let(:alice_aspect) { alice.aspects.first }
 

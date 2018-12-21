@@ -7,12 +7,12 @@ describe Api::V1::NotificationsController do
     FactoryGirl.create(:auth_with_all_scopes)
   }
 
-  let(:auth_profile_only) {
+  let(:auth_minimum_scopes) {
     FactoryGirl.create(:auth_with_default_scopes)
   }
 
   let!(:access_token) { auth.create_access_token.to_s }
-  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
 
   before do
     @post = auth.user.post(
@@ -87,7 +87,7 @@ describe Api::V1::NotificationsController do
       it "with insufficient credentials" do
         get(
           api_v1_notifications_path,
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end
@@ -145,7 +145,7 @@ describe Api::V1::NotificationsController do
       it "with insufficient credentials" do
         get(
           api_v1_notification_path(@notification.guid),
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end
@@ -200,7 +200,7 @@ describe Api::V1::NotificationsController do
       it "with insufficient credentials" do
         patch(
           api_v1_notification_path(@notification.guid),
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end

@@ -17,13 +17,13 @@ describe Api::V1::LikesController do
     )
   }
 
-  let(:auth_profile_only) {
+  let(:auth_minimum_scopes) {
     FactoryGirl.create(:auth_with_default_scopes)
   }
 
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
-  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
   let(:invalid_token) { SecureRandom.hex(9) }
 
   before do
@@ -49,7 +49,7 @@ describe Api::V1::LikesController do
       it "succeeds in getting empty likes" do
         get(
           api_v1_post_likes_path(post_id: @status.guid),
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(200)
         likes = response_body_data(response)
@@ -62,7 +62,7 @@ describe Api::V1::LikesController do
         like_service(alice).create(@status.guid)
         get(
           api_v1_post_likes_path(post_id: @status.guid),
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(200)
         likes = response_body_data(response)
@@ -162,7 +162,7 @@ describe Api::V1::LikesController do
       it "fails in liking post without interactions" do
         post(
           api_v1_post_likes_path(post_id: @private_status.guid),
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end
@@ -235,10 +235,10 @@ describe Api::V1::LikesController do
       end
 
       it "fails in unliking post without interactions" do
-        like_service(auth_profile_only.user).create(@status.guid)
+        like_service(auth_minimum_scopes.user).create(@status.guid)
         delete(
           api_v1_post_likes_path(post_id: @status.guid),
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end

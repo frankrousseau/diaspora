@@ -37,14 +37,14 @@ describe Api::V1::UsersController do
     )
   }
 
-  let(:auth_profile_only) {
+  let(:auth_minimum_scopes) {
     FactoryGirl.create(:auth_with_default_scopes)
   }
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_public_only) { auth_public_only.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
   let!(:access_token_public_only_read_only) { auth_public_only_read_only.create_access_token.to_s }
-  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
 
   describe "#show" do
     context "Current User" do
@@ -143,7 +143,7 @@ describe Api::V1::UsersController do
 
         get(
           "/api/v1/users/#{unsearchable_user.guid}",
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end

@@ -14,13 +14,13 @@ describe Api::V1::ConversationsController do
     FactoryGirl.create(:auth_with_all_scopes)
   }
 
-  let(:auth_profile_only) {
+  let(:auth_minimum_scopes) {
     FactoryGirl.create(:auth_with_default_scopes)
   }
 
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_participant) { auth_participant.create_access_token.to_s }
-  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
   let(:invalid_token) { SecureRandom.hex(9) }
 
   before do
@@ -29,9 +29,9 @@ describe Api::V1::ConversationsController do
     alice.share_with(auth.user.person, alice.aspects[0])
     auth.user.disconnected_by(eve)
 
-    auth_profile_only.user.aspects.create(name: "first")
-    auth_profile_only.user.share_with(alice.person, auth_profile_only.user.aspects[0])
-    alice.share_with(auth_profile_only.user.person, alice.aspects[0])
+    auth_minimum_scopes.user.aspects.create(name: "first")
+    auth_minimum_scopes.user.share_with(alice.person, auth_minimum_scopes.user.aspects[0])
+    alice.share_with(auth_minimum_scopes.user.person, alice.aspects[0])
 
     @conversation_request = {
       subject:      "new conversation",
@@ -122,7 +122,7 @@ describe Api::V1::ConversationsController do
           subject:      "new conversation",
           body:         "first message",
           recipients:   [alice.guid],
-          access_token: access_token_profile_only
+          access_token: access_token_minimum_scopes
         }
         post api_v1_conversations_path, params: conversation_request
         expect(response.status).to eq(403)
@@ -189,7 +189,7 @@ describe Api::V1::ConversationsController do
       it "fails without conversation scope" do
         get(
           api_v1_conversations_path,
-          params: {only_after: @date, access_token: access_token_profile_only}
+          params: {only_after: @date, access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end
@@ -238,7 +238,7 @@ describe Api::V1::ConversationsController do
       it "fails without conversation scope" do
         get(
           api_v1_conversation_path(@conversation_guid),
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end
@@ -333,7 +333,7 @@ describe Api::V1::ConversationsController do
       it "fails without conversation scope" do
         delete(
           api_v1_conversation_path(@conversation_guid),
-          params: {access_token: access_token_profile_only}
+          params: {access_token: access_token_minimum_scopes}
         )
         expect(response.status).to eq(403)
       end

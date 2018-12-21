@@ -11,13 +11,13 @@ describe Api::V1::ResharesController do
     FactoryGirl.create(:auth_with_read_scopes)
   }
 
-  let(:auth_profile_only) {
+  let(:auth_minimum_scopes) {
     FactoryGirl.create(:auth_with_default_scopes)
   }
 
   let!(:access_token) { auth.create_access_token.to_s }
   let!(:access_token_read_only) { auth_read_only.create_access_token.to_s }
-  let!(:access_token_profile_only) { auth_profile_only.create_access_token.to_s }
+  let!(:access_token_minimum_scopes) { auth_minimum_scopes.create_access_token.to_s }
 
   before do
     @user_post = auth.user.post(
