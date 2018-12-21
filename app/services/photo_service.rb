@@ -12,15 +12,15 @@ class PhotoService
 
   def create_from_params_and_file(base_params, uploaded_file)
     photo_params = build_params(base_params)
-
     raise RuntimeError if @deny_raw_files && !confirm_uploaded_file_settings(uploaded_file)
-    photo_params[:user_file] = uploaded_file
 
+    photo_params[:user_file] = uploaded_file
     photo = @user.build_post(:photo, photo_params)
     raise RuntimeError unless photo.save
 
     send_messages(photo, photo_params)
     update_profile_photo(photo) if photo_params[:set_profile_photo]
+
     photo
   end
 
