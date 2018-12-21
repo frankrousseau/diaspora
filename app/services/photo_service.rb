@@ -50,7 +50,7 @@ class PhotoService
   def send_messages(photo, photo_params)
     send_to_streams(photo, photo_params) unless photo.pending && photo.public?
 
-    @user.dispatch_post(photo, to: photo_params[:aspect_ids]) unless pending
+    @user.dispatch_post(photo, to: photo_params[:aspect_ids]) unless photo.pending
   end
 
   def update_profile_photo(photo)
