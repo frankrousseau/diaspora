@@ -24,7 +24,6 @@ describe Api::OpenidConnect::TokenEndpointController, type: :controller, suppres
         client_secret: auth.o_auth_application.client_secret
       }
       expect(response.code).to eq("200")
-      puts response.body
     end
   end
 end
