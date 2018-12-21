@@ -419,7 +419,6 @@ describe Api::V1::CommentsController do
         expect(response.status).to eq(401)
       end
     end
-
   end
 
   def comment_service(user=auth.user)

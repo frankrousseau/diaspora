@@ -246,7 +246,7 @@ describe Api::V1::ConversationsController do
       it "fails without valid token" do
         conversation_guid = response_body(response)["guid"]
         get(
-          api_v1_conversation_path(@conversation_guid),
+          api_v1_conversation_path(conversation_guid),
           params: {access_token: invalid_token}
         )
         expect(response.status).to eq(401)
@@ -346,7 +346,6 @@ describe Api::V1::ConversationsController do
         expect(response.status).to eq(401)
       end
     end
-
   end
 
   def conversation_service

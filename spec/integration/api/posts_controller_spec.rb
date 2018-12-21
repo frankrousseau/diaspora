@@ -172,7 +172,6 @@ describe Api::V1::PostsController do
         expect(response.status).to eq(401)
       end
     end
-
   end
 
   describe "#create" do

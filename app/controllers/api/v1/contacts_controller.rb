@@ -44,7 +44,7 @@ module Api
         aspect_id = params.require(:aspect_id)
         person = Person.find_by(guid: params[:id])
         result = aspects_membership_service.destroy_by_ids(aspect_id, person.id) if person.present?
-        
+
         if result && result[:success]
           head :no_content
         else

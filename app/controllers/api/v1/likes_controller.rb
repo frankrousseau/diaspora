@@ -7,7 +7,7 @@ module Api
         require_access_token %w[public:read]
       end
 
-      before_action only:%i[create destroy] do
+      before_action only: %i[create destroy] do
         require_access_token %w[interactions]
       end
 

@@ -71,7 +71,7 @@ module Api
         parameters
       end
 
-      def aspect_as_json(aspect,as_full)
+      def aspect_as_json(aspect, as_full)
         AspectPresenter.new(aspect).as_api_json(as_full)
       end
     end

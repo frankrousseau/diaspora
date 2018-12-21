@@ -237,7 +237,7 @@ describe Api::V1::ContactsController do
       end
 
       it "fails when only read only token" do
-        aspect = auth_read_only.user.aspects.create(name:"new")
+        aspect = auth_read_only.user.aspects.create(name: "new")
         aspects_membership_service(auth_read_only.user).create(aspect.id, alice.person.id)
         delete(
           api_v1_aspect_contact_path(aspect.id, alice.guid),

@@ -275,7 +275,8 @@ describe Api::V1::UsersController do
           params: {
             location:     "New Location",
             bio:          "New Bio",
-            access_token: invalid_token}
+            access_token: invalid_token
+          }
         )
         expect(response.status).to eq(401)
       end
@@ -286,7 +287,8 @@ describe Api::V1::UsersController do
           params: {
             location:     "New Location",
             bio:          "New Bio",
-            access_token: access_token_read_only}
+            access_token: access_token_read_only
+          }
         )
         expect(response.status).to eq(403)
       end
